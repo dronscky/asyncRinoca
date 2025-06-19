@@ -47,6 +47,16 @@ class ParseXMLMixin:
         return self.canonicalizate_tree(self.tree)
 
 
+class OperationMixin:
+    _node = None
+
+    def set_version(self, version):
+        """
+        Устанавливаем версию запроса
+        """
+        self._node.set(r'{http://dom.gosuslugi.ru/schema/integration/base/}version', version)
+
+
 class BaseXML(ParseXMLMixin):
     def __init__(self, template: Path) -> None:
         self.tree = ET.parse(template)
