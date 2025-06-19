@@ -2,8 +2,10 @@ from pathlib import Path
 
 import lxml.etree as ET
 
-from src.config import ORG_GUID
-from src.base_xml.utils import gen_guid, get_isotime
+from src.base.utils import gen_guid, get_isotime
+from src.config import project_config
+
+ORG_GUID = project_config.config.get('guid', 'org')
 
 
 class ParseXMLMixin:
