@@ -1,0 +1,14 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:base="http://dom.gosuslugi.ru/schema/integration/base/">
+   <soapenv:Header>
+      <base:RequestHeader>
+         <base:Date></base:Date>
+         <base:MessageGUID></base:MessageGUID>
+         <base:orgPPAGUID></base:orgPPAGUID>
+      </base:RequestHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <base:getStateRequest>
+         <base:MessageGUID></base:MessageGUID>
+      </base:getStateRequest>
+   </soapenv:Body>
+</soapenv:Envelope>

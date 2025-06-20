@@ -1,0 +1,44 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:base="http://dom.gosuslugi.ru/schema/integration/base/" xmlns:drs="http://dom.gosuslugi.ru/schema/integration/drs/" xmlns:xd="http://www.w3.org/2000/09/xmldsig#" xmlns:nsi="http://dom.gosuslugi.ru/schema/integration/nsi-base/">
+   <soapenv:Header>
+      <base:RequestHeader>
+         <base:Date></base:Date>
+         <base:MessageGUID></base:MessageGUID>
+         <base:orgPPAGUID></base:orgPPAGUID>
+      </base:RequestHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <drs:importDSRResponsesRequest Id="signed-data-container" base:version="?">
+            <drs:action>
+               <base:TransportGUID></base:TransportGUID>
+               <drs:subrequestGUID></drs:subrequestGUID>
+               <drs:actionType></drs:actionType>
+               <drs:responseData>
+                  <drs:hasDebt></drs:hasDebt>
+                  <drs:description></drs:description>
+                  <drs:executorGUID></drs:executorGUID>
+                  <drs:debtInfo>
+                     <drs:person>
+                        <drs:firstName></drs:firstName>
+                        <drs:lastName></drs:lastName>
+                        <drs:middleName></drs:middleName>
+                     </drs:person>
+                     <drs:document>
+                        <drs:type>
+                           <nsi:Code>1</nsi:Code>
+                           <nsi:GUID>237b587e-0b10-4702-b78c-8d641c3d4d45</nsi:GUID>
+                        </drs:type>
+                        <drs:attachment>
+                           <base:Name></base:Name>
+                           <base:Description></base:Description>
+                           <base:Attachment>
+                              <base:AttachmentGUID></base:AttachmentGUID>
+                           </base:Attachment>
+                           <base:AttachmentHASH></base:AttachmentHASH>
+                        </drs:attachment>
+                     </drs:document>
+                  </drs:debtInfo>
+               </drs:responseData>
+            </drs:action>
+      </drs:importDSRResponsesRequest>
+   </soapenv:Body>
+</soapenv:Envelope>

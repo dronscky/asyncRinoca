@@ -82,10 +82,7 @@ def get_digest(text):
     Хэшируем. Вывод в BASE64
     """
     cmd = [OPENSSL, 'dgst', '-engine', 'gost', '-md_gost12_256', '-binary']
-    out, err = _run(cmd, input=text)
-    if err:
-        logger.error(f'Openssl error: {err}')
-        raise
+    out, _ = _run(cmd, input=text)
     return get_base64(out)
 
 
@@ -94,10 +91,7 @@ def calculate_upload_file_hash(text):
     Хэшируем
     """
     cmd = [OPENSSL, 'dgst', '-engine', 'gost', '-md_gost94', '-binary']
-    out, err = _run(cmd, input=text)
-    if err:
-        logger.error(f'Openssl error: {err}')
-        raise
+    out, _ = _run(cmd, input=text)
     return out
 
 
@@ -106,8 +100,5 @@ def sign(text, private_key):
     Подписываем. Вывод в BASE64
     """
     cmd = [OPENSSL, 'dgst', '-engine', 'gost', '-md_gost12_256', '-binary', '-sign', private_key]
-    out, err = _run(cmd, input=text)
-    if err:
-        logger.error(f'Openssl error: {err}')
-        raise
+    out, _ = _run(cmd, input=text)
     return get_base64(out)

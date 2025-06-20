@@ -17,6 +17,10 @@ class RinocaConfig:
             'guid': {
                 'org': '',
                 'executor': ''
+            },
+            'connect': {
+                'host': '',
+                'port': ''
             }
         }
         # Чтение конфигурационного файла

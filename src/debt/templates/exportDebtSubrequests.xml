@@ -1,0 +1,23 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:base="http://dom.gosuslugi.ru/schema/integration/base/">
+   <soapenv:Header>
+      <base:RequestHeader>
+         <base:Date></base:Date>
+         <base:MessageGUID></base:MessageGUID>
+         <base:orgPPAGUID></base:orgPPAGUID>
+      </base:RequestHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <drs:exportDSRsRequest xmlns:base="http://dom.gosuslugi.ru/schema/integration/base/" 
+                              xmlns:drs="http://dom.gosuslugi.ru/schema/integration/drs/" 
+                              Id="signed-data-container"  base:version="?">
+         <drs:periodOfSendingRequest>
+            <base:startDate></base:startDate>
+            <base:endDate></base:endDate>
+         </drs:periodOfSendingRequest>
+         <drs:responseStatus>NotSent</drs:responseStatus>
+         <drs:exportSubrequestGUID>?</drs:exportSubrequestGUID>
+         <drs:includeResponses>true</drs:includeResponses>
+      </drs:exportDSRsRequest>
+   </soapenv:Body>
+</soapenv:Envelope>

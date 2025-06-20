@@ -4,7 +4,7 @@ from pytz import timezone
 
 
 def gen_guid() -> uuid:
-    return uuid.uuid1()
+    return str(uuid.uuid1())
 
 
 def get_isotime():
