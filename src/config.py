@@ -21,6 +21,9 @@ class RinocaConfig:
             'connect': {
                 'host': '',
                 'port': ''
+            },
+            'mobill': {
+                'key': ''
             }
         }
         # Чтение конфигурационного файла

@@ -86,7 +86,7 @@ def get_digest(text):
     return get_base64(out)
 
 
-def calculate_upload_file_hash(text):
+def calc_hash_by_gost94(text):
     """
     Хэшируем
     """
