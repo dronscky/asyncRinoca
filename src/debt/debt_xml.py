@@ -104,31 +104,32 @@ class ImportDebtResponses(BaseXML, OperationMixin):
                     clone.find('drs:actionType', namespaces=ns).text = 'Send'
                     clone.find('drs:responseData/drs:description', namespaces=ns).text = ' '
                     clone.find('drs:responseData/drs:executorGUID', namespaces=ns).text = EXEC_GUID
-                    if not item.persons:
+                    if not item.debtData:
                         clone.find('drs:responseData/drs:hasDebt', namespaces=ns).text = 'false'
                     else:
-                        for name in item.persons:
-                            clone.find('drs:responseData/drs:hasDebt', namespaces=ns).text = 'true'
-                            # находим узел ResponseData для добавления информации о должниках
-                            resp_data_node = clone.find('drs:responseData', namespaces=ns)
-                            # клонируем узел debtInfo для каждого должника
-                            debt_info_clone = copy.deepcopy(self.debt_info)
-                            debt_info_clone.find('drs:person/drs:firstName', namespaces=ns).text = name.firstName
-                            debt_info_clone.find('drs:person/drs:lastName', namespaces=ns).text = name.lastName
-                            debt_info_clone.find('drs:person/drs:middleName', namespaces=ns).text = name.middleName
+                        for debtors in item.debtData:
+                            for name in debtors.persons:
+                                clone.find('drs:responseData/drs:hasDebt', namespaces=ns).text = 'true'
+                                # находим узел ResponseData для добавления информации о должниках
+                                resp_data_node = clone.find('drs:responseData', namespaces=ns)
+                                # клонируем узел debtInfo для каждого должника
+                                debt_info_clone = copy.deepcopy(self.debt_info)
+                                debt_info_clone.find('drs:person/drs:firstName', namespaces=ns).text = name.firstName
+                                debt_info_clone.find('drs:person/drs:lastName', namespaces=ns).text = name.lastName
+                                debt_info_clone.find('drs:person/drs:middleName', namespaces=ns).text = name.middleName
 
-                            if files := item.files:
-                                for file in files:
-                                    # клонируем узел attachmentFile для каждого файла
-                                    attachment_file_clone = copy.deepcopy(self.attachment_file)
-                                    attachment_file_clone.find('drs:attachment/base:Name', namespaces=ns).text = file.name
-                                    attachment_file_clone.find('drs:attachment/base:Description', namespaces=ns).text = file.desc
-                                    attachment_file_clone.find('drs:attachment/base:Attachment/base:AttachmentGUID', namespaces=ns).text = file.attachmentGUID
-                                    attachment_file_clone.find('drs:attachment/base:AttachmentHASH', namespaces=ns).text = file.attachmentHASH
-                                    debt_info_clone.append(attachment_file_clone)
+                                if files := debtors.files:
+                                    for file in files:
+                                        # клонируем узел attachmentFile для каждого файла
+                                        attachment_file_clone = copy.deepcopy(self.attachment_file)
+                                        attachment_file_clone.find('drs:attachment/base:Name', namespaces=ns).text = file.name
+                                        attachment_file_clone.find('drs:attachment/base:Description', namespaces=ns).text = file.desc
+                                        attachment_file_clone.find('drs:attachment/base:Attachment/base:AttachmentGUID', namespaces=ns).text = file.attachmentGUID
+                                        attachment_file_clone.find('drs:attachment/base:AttachmentHASH', namespaces=ns).text = file.attachmentHASH
+                                        debt_info_clone.append(attachment_file_clone)
 
-                            # вставляем
-                            resp_data_node.append(debt_info_clone)
+                                # вставляем
+                                resp_data_node.append(debt_info_clone)
                     self.node.append(clone)
             case 'revoke':
                 for item in self.data:
