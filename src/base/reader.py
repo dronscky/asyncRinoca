@@ -27,6 +27,22 @@ class ReaderAckRequest(ReaderXML):
         logger.error(f'Некорректный Ack-ответ на запрос: {self.xml}')
         raise
 
+
 def get_ack_message_guid(ack_xml):
     reader = ReaderAckRequest(ack_xml)
     return reader.get_ack_request()
+
+
+class ReaderAckImportResponses(ReaderXML):
+    def __init__(self, xml):
+        super().__init__(xml)
+        self.xml = xml
+
+    def get_ack_import_responses(self) -> int:
+        ack = self.get_element('//ns4:RequestState')
+        return ack.text
+
+
+def get_ack_import_responses_state(ack_xml) -> int:
+    reader = ReaderAckImportResponses(ack_xml)
+    return reader.get_ack_import_responses()

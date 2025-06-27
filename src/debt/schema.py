@@ -7,7 +7,20 @@ class RequestPeriod:
     endDate: str
 
 
-@dataclass
+@dataclass(frozen=True)
+class SubrequestData:
+    """
+    Данные подзапроса
+    """
+    subrequestGUID: str
+    sentDate: str
+    responseDate: str
+    fiasHouseGUID: str
+    address: str
+    apartment: str
+
+
+@dataclass(frozen=True)
 class DebtPersons:
     """
     Данные должников, где firstName = Имя
@@ -19,17 +32,22 @@ class DebtPersons:
     middleName: str = ''
 
 
-@dataclass
+@dataclass(frozen=True)
 class FileData:
     name: str
     attachmentGUID: str
     attachmentHASH: str
-    desc: str = ''
+    desc: str = ' '
 
 
-@dataclass
+@dataclass(frozen=True)
+class DebtData:
+    persons: list[DebtPersons] = field(default_factory=list)
+    files: list[FileData] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class ImportData:
     """Формат выходных данных внешней системы"""
     subrequestGUID: str
-    persons: list[DebtPersons] = field(default_factory=list)
-    files: list[FileData] = field(default_factory=list)
+    debtData: list[DebtData] = field(default_factory=list)

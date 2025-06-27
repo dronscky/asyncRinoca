@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.base.reader import ReaderXML
+from src.debt.schema import SubrequestData
 from src.log.log import logger
 
 
@@ -26,19 +27,6 @@ def num_apartment(val: str | None) -> str:
             return val
     else:
         return ''
-
-
-@dataclass
-class SubrequestData:
-    """
-    Данные подзапроса
-    """
-    subrequestGUID: str
-    sentDate: str
-    responseDate: str
-    fiasHouseGUID: str
-    address: str
-    apartment: str
 
 
 @dataclass(frozen=True)
@@ -93,12 +81,12 @@ class ReaderExportDSRsResult(ReaderXML):
                         if (address_elem := subrequest.find('.//ns13:address', namespaces=self.ns)) is not None:
                             address = address_elem.text
                         else:
-                            address = None
+                            address = ''
 
                         if (apartment_elem := subrequest.find('.//ns13:addressDetails', namespaces=self.ns)) is not None:
                             apartment = num_apartment(apartment_elem.text)
                         else:
-                            apartment = None
+                            apartment = ''
 
                         subrequests_data.append(SubrequestData(subrequestGUID=subrequest_guid,
                                                                sentDate=sent_date,
