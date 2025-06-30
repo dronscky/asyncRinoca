@@ -41,9 +41,19 @@ class FileData:
 
 
 @dataclass(frozen=True)
+class DebtDocAttrs:
+    case_number: str
+    sum_debt: float
+    penalty: float
+    stamp_duty: float
+    total: float
+
+
+@dataclass(frozen=True)
 class DebtData:
     persons: list[DebtPersons] = field(default_factory=list)
     files: list[FileData] = field(default_factory=list)
+    debt_doc_attrs: DebtDocAttrs = None
 
 
 @dataclass(frozen=True)
