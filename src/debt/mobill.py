@@ -1,6 +1,6 @@
 import asyncio
 import base64
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 import json
 import re
@@ -17,10 +17,19 @@ class File:
     file: bytes
 
 
+@dataclass(frozen=True)
+class BuhCheckData:
+    account: str
+    address: str
+    fio: str
+    case_number: str
+
+
 @dataclass
 class DebtDocs:
     debtors: list[DebtPersons]
     files: list[File]
+    buhCheckDate: BuhCheckData = None
 
 
 def split_debtors_names(persons: list[str] | str) -> list[DebtPersons]:
@@ -37,6 +46,29 @@ def find_sp_filename(filename: str) -> str:
         if re.findall(pattern, filename):
             return filename
     return ''
+
+
+async def get_responses_data(subrequests_data: list[SubrequestData], getfile: bool = False) -> list[ImportData]:
+    tasks = [_get_response_data(subrequest_data, getfile) for subrequest_data in subrequests_data]
+    result = await asyncio.gather(*tasks)
+    return [*result]
+
+
+async def _get_response_data(subrequest_data: SubrequestData, getfile: bool) -> Optional[ImportData]:
+    params = {
+        # перечень ключей словаря параметров для поиска согласно API Mobill для поиска задолженности
+        'houseguid': subrequest_data.fiasHouseGUID,
+        'apartment': subrequest_data.apartment
+    }
+    json_response = await get_court_debt(params, getfile)
+    if debt_docs := _get_debtors_data(json_response):
+        debtData = []
+        for debt_doc in debt_docs:
+            debtData.append(DebtData(persons=debt_doc.debtors,
+                                     files=await get_upload_files_data(debt_doc.files)))
+        return ImportData(subrequestGUID=subrequest_data.subrequestGUID, debtData=debtData)
+
+    return ImportData(subrequestGUID=subrequest_data.subrequestGUID, debtData=[])
 
 
 def _get_debtors_data(mobill_json_response: json) -> Optional[list[DebtDocs]]:
@@ -84,30 +116,8 @@ def _get_debtors_data(mobill_json_response: json) -> Optional[list[DebtDocs]]:
 
                             debt_doc = DebtDocs(
                                 debtors=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
-                                files=files
+                                files=files,
+
                             )
                             debt_docs.append(debt_doc)
     return debt_docs
-
-
-async def _get_response_data(subrequest_data: SubrequestData, getfile: bool) -> Optional[ImportData]:
-    params = {
-        # перечень ключей словаря параметров для поиска согласно API Mobill для поиска задолженности
-        'houseguid': subrequest_data.fiasHouseGUID,
-        'apartment': subrequest_data.apartment
-    }
-    json_response = await get_court_debt(params, getfile)
-    if debt_docs := _get_debtors_data(json_response):
-        debtData = []
-        for debt_doc in debt_docs:
-            debtData.append(DebtData(persons=debt_doc.debtors,
-                                     files=await get_upload_files_data(debt_doc.files)))
-        return ImportData(subrequestGUID=subrequest_data.subrequestGUID, debtData=debtData)
-
-    return ImportData(subrequestGUID=subrequest_data.subrequestGUID, debtData=[])
-
-
-async def get_responses_data(subrequests_data: list[SubrequestData], getfile: bool = False) -> list[ImportData]:
-    tasks = [_get_response_data(subrequest_data, getfile) for subrequest_data in subrequests_data]
-    result = await asyncio.gather(*tasks)
-    return [*result]
