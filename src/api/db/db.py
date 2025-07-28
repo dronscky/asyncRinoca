@@ -1,5 +1,6 @@
 import os
 from functools import wraps
+from typing import Any
 
 import aioodbc
 
@@ -24,8 +25,9 @@ def connect_db(func):
                     await conn.commit()
                     return result
                 except Exception as e:
-                    logger.error(f"Error executing {func.__name__}: {e}")
-                    raise
+                    if 'duplicate' not in str(e).lower():
+                        logger.error(f"Error executing {func.__name__}: {e}")
+                        raise
                 finally:
                     await conn.rollback()
     return wrapper
@@ -40,3 +42,8 @@ async def select_command(command: str, *args, cursor=None):
 @connect_db
 async def execute_command(command: str, *args, cursor=None):
     await cursor.execute(command, args)
+
+
+@connect_db
+async def executemany_command(command: str, params: list[tuple[Any]], cursor=None):
+    await cursor.executemany(command, params)

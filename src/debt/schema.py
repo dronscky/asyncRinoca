@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from src.debt.file import GISFileDataFormat
+
 
 @dataclass(frozen=True)
 class RequestPeriod:
@@ -21,7 +23,7 @@ class SubrequestData:
 
 
 @dataclass(frozen=True)
-class DebtPersons:
+class PersonName:
     """
     Данные должников, где firstName = Имя
                           lastName = Фамилия
@@ -31,33 +33,18 @@ class DebtPersons:
     firstName: str
     middleName: str = ''
 
-
-@dataclass(frozen=True)
-class FileData:
-    name: str
-    attachmentGUID: str
-    attachmentHASH: str
-    desc: str = ' '
+    def __repr__(self):
+        return f'{self.lastName} {self.firstName} {self.middleName}'.strip()
 
 
 @dataclass(frozen=True)
-class DebtDocAttrs:
-    case_number: str
-    sum_debt: float
-    penalty: float
-    stamp_duty: float
-    total: float
+class GISDebtorsData:
+    persons: list[PersonName] = field(default_factory=list)
+    files: list[GISFileDataFormat] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
-class DebtData:
-    persons: list[DebtPersons] = field(default_factory=list)
-    files: list[FileData] = field(default_factory=list)
-    debt_doc_attrs: DebtDocAttrs = None
-
-
-@dataclass(frozen=True)
-class ImportData:
+class GISResponseDataFormat:
     """Формат выходных данных внешней системы"""
     subrequestGUID: str
-    debtData: list[DebtData] = field(default_factory=list)
+    debtorsData: list[GISDebtorsData] = field(default_factory=list)

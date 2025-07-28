@@ -9,7 +9,7 @@ from src.api.gis.utils import calc_hash_by_md5, generate_string, get_file_extens
 from src.log.log import logger
 
 
-@dataclass
+@dataclass(frozen=True)
 class File:
     filename: str
     file: bytes

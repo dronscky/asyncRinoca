@@ -19,7 +19,7 @@ def connect(func):
 
 
 @connect
-async def get_court_debt(session: aiohttp.ClientSession, data: dict[str, Any], getfile: bool = False):
+async def get_court_debt_mob_api_response(session: aiohttp.ClientSession, data: dict[str, Any], getfile: bool = False):
     url = f'http://mobill-tko/csp/eco/api.csp?type=balance&action=getcourtdebt&key={KEY}'
 
     if getfile:
