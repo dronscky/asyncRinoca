@@ -29,6 +29,7 @@ async def get_court_debt_mob_api_response(session: aiohttp.ClientSession, data: 
         async with session.post(url=url, data=data) as response:
             if response.status == 200:
                 json_response = json.loads(await response.text(encoding='utf-8'))
+                # print(json_response)
                 return json_response
             else:
                 logger.error(response.status)

@@ -70,9 +70,17 @@ async def worker():
             break
 
 
-async def main():
-    pass
+# async def main():
+#     export_subrequests = ExportDebtSubrequests(sub=None)
+#     st1_ack = await export_debt_subrequests(export_subrequests.get_xml())
+#     print(st1_ack)
+#     await asyncio.sleep(2.0)
+#     state_exp = GetStateXML()
+#     state_exp.set_message_guid(get_ack_message_guid(st1_ack))
+#     st2_ack = await state_request(state_exp.get_xml())
+#     print(get_exportDSRsData(st2_ack))
 
 
 if __name__ == '__main__':
     asyncio.run(worker())
+    # asyncio.run(main())

@@ -3,6 +3,30 @@ from dataclasses import dataclass, field
 from src.debt.file import GISFileDataFormat
 
 
+@dataclass
+class SubrequestCheckDetails:
+    sent_date: str
+    response_date: str
+    subrequestguid: str
+    fias: str
+    address: str
+    apartment: str
+    persons: str
+    account: str
+    case_number: str
+    sum_debt: float
+    penalty: float
+    duty: float
+    total: float
+    buh: str = None
+
+    def __post_init__(self):
+        self.sum_debt = float(self.sum_debt)
+        self.penalty = float(self.penalty)
+        self.duty = float(self.duty)
+        self.total = float(self.total)
+
+
 @dataclass(frozen=True)
 class RequestPeriod:
     startDate: str

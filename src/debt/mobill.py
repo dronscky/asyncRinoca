@@ -11,27 +11,10 @@ from src.log.log import logger
 from src.api.gis.file import File
 from src.api.mobill.api import get_court_debt_mob_api_response
 from src.debt.file import get_upload_files_data
-from src.debt.schema import GISDebtorsData, PersonName, GISResponseDataFormat, SubrequestData
+from src.debt.schema import GISDebtorsData, PersonName, GISResponseDataFormat, SubrequestData, SubrequestCheckDetails
 
 
 class DebtApiResponseFile(File):...
-
-
-@dataclass(frozen=True)
-class CheckDetails:
-    sent_date: str
-    response_date: str
-    subrequestguid: str
-    fias: str
-    address: str
-    apartment: str
-    persons: str
-    account: str
-    case_number: str
-    sum_debt: float
-    penalty: float
-    duty: float
-    total: float
 
 
 @dataclass(frozen=True)
@@ -90,20 +73,20 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
                 await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate, 'Имеется')
             else:
                 persons = ', '.join([repr(p) for p in debt_account.persons])
-                await _db_insert_check_subrequest(CheckDetails(sent_date=subrequest_data.sentDate,
-                                                               response_date=subrequest_data.responseDate,
-                                                               subrequestguid=subrequest_data.subrequestGUID,
-                                                               fias=subrequest_data.fiasHouseGUID,
-                                                               address=subrequest_data.address,
-                                                               apartment=subrequest_data.apartment,
-                                                               persons=persons,
-                                                               account=debt_account.ext_params.account,
-                                                               case_number=debt_account.ext_params.case_number,
-                                                               sum_debt=debt_account.ext_params.sum_debt,
-                                                               penalty=debt_account.ext_params.penalty,
-                                                               duty=debt_account.ext_params.duty,
-                                                               total=debt_account.ext_params.total
-                                                               ))
+                await _db_insert_check_subrequest(SubrequestCheckDetails(sent_date=subrequest_data.sentDate,
+                                                                         response_date=subrequest_data.responseDate,
+                                                                         subrequestguid=subrequest_data.subrequestGUID,
+                                                                         fias=subrequest_data.fiasHouseGUID,
+                                                                         address=subrequest_data.address,
+                                                                         apartment=subrequest_data.apartment,
+                                                                         persons=persons,
+                                                                         account=debt_account.ext_params.account,
+                                                                         case_number=debt_account.ext_params.case_number,
+                                                                         sum_debt=debt_account.ext_params.sum_debt,
+                                                                         penalty=debt_account.ext_params.penalty,
+                                                                         duty=debt_account.ext_params.duty,
+                                                                         total=debt_account.ext_params.total
+                                                                         ))
                 await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate)
     return GISResponseDataFormat(subrequestGUID=subrequest_data.subrequestGUID, debtorsData=debtors_data)
 
@@ -118,14 +101,14 @@ async def _get_court_debt_api_response(house_fias: str, apartment: str, getfile:
     return _process_mob_json_response(json_response)
 
 
-async def _db_insert_check_subrequest(subrequest_details: CheckDetails):
+async def _db_insert_check_subrequest(subrequest_details: SubrequestCheckDetails):
     sql = """
         insert into details_a (sent_date, response_date, subrequestguid, fias, address, apartment, 
                                persons, account, case_number, sum_debt, penalty, duty, total)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     try:
-        await execute_command(sql, *astuple(subrequest_details))
+        await execute_command(sql, *astuple(subrequest_details)[:-1])
     except Exception as e:
         logger.error(f'Ошибка записи в БД: {subrequest_details}. {e=}')
 
@@ -189,3 +172,12 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                 )
                 resp_data.append(data)
     return resp_data
+
+
+async def main():
+    # SubrequestData(subrequestGUID='10eef6e0-744f-11f0-ac99-1b3e4c2a9278', sentDate='2025-08-08', responseDate='2025-08-15', fiasHouseGUID='4d866468-6a1a-4d50-b1b4-127d0a429837', address='450049, Респ Башкортостан, г Уфа, ул Баязита Бикбая, д. 29', apartment='10')
+    print(await _get_court_debt_api_response('66c35881-1591-49b2-b268-8b2c09e1652f', '35', False))
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(main())
