@@ -154,23 +154,25 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                                                                duty=last_document['SumDebtDuty'],
                                                                total=last_document['SumDebtTotal'])
 
-                files = []
-                if last_document.get('File'):
-                    for file in last_document['File']:
-                        if file_name := find_sp_filename(file['FileName']):
-                            file_content = ''.join(file_chunk.replace('\n', '') for file_chunk in file['FileContent'])
-                            f = DebtApiResponseFile(
-                                filename=file_name,
-                                file=base64.b64decode(file_content)
-                            )
-                            files.append(f)
+                    files = []
+                    if last_document.get('File'):
+                        for file in last_document['File']:
+                            if file_name := find_sp_filename(file['FileName']):
+                                file_content = ''.join(file_chunk.replace('\n', '') for file_chunk in file['FileContent'])
+                                f = DebtApiResponseFile(
+                                    filename=file_name,
+                                    file=base64.b64decode(file_content)
+                                )
+                                files.append(f)
 
-                data = DebtApiResponseData(
-                    persons=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
-                    files=files,
-                    ext_params=ext_params
-                )
-                resp_data.append(data)
+                    data = DebtApiResponseData(
+                        persons=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
+                        files=files,
+                        ext_params=ext_params
+                    )
+                    resp_data.append(data)
+    else:
+        logger.info(mobill_json_response)
     return resp_data
 
 
