@@ -5,6 +5,7 @@ from typing import Optional
 from src.api.db.db import select_command, executemany_command
 from src.debt.gsheet import create_spreadsheet
 from src.debt.schema import SubrequestCheckDetails
+from src.emails.emails import send_email
 from src.log.log import logger
 
 
@@ -32,7 +33,9 @@ async def _create_spreadsheet(data: list[SubrequestCheckDetails]) -> None:
     title = f'Отчет на проверку {datetime.now().strftime('%y-%m-%d')}'
     try:
         await create_spreadsheet(title, data)
-        logger.info(f'Отчет "{title}" сформирован {datetime.now()}')
+        m = f'Отчет "{title}" сформирован {datetime.now()}'
+        logger.info(m)
+        send_email(title, m)
     except Exception as e:
         logger.error(e)
         raise

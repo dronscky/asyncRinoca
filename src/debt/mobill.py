@@ -70,7 +70,6 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
             if getfile:
                 debtors_data.append(GISDebtorsData(persons=debt_account.persons,
                                                    files=await get_upload_files_data(debt_account.files)))
-                await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate, 'Имеется')
             else:
                 persons = ', '.join([repr(p) for p in debt_account.persons])
                 await _db_insert_check_subrequest(SubrequestCheckDetails(sent_date=subrequest_data.sentDate,
@@ -87,7 +86,12 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
                                                                          duty=debt_account.ext_params.duty,
                                                                          total=debt_account.ext_params.total
                                                                          ))
-                await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate)
+
+    if debtors_data:
+        await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate, 'Имеется')
+    else:
+        await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate)
+
     return GISResponseDataFormat(subrequestGUID=subrequest_data.subrequestGUID, debtorsData=debtors_data)
 
 
@@ -117,6 +121,8 @@ async def _db_insert_subrequest(subrequestguid: str, sent_date: str, answer: str
     sql = """
         insert into requests (requestguid, answer, sent_date, answer_time)
         values (?, ?, ?, ?)
+        on duplicate key update
+        answer = values(answer)
     """
     try:
         await execute_command(sql,
@@ -179,6 +185,8 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
 async def main():
     # SubrequestData(subrequestGUID='10eef6e0-744f-11f0-ac99-1b3e4c2a9278', sentDate='2025-08-08', responseDate='2025-08-15', fiasHouseGUID='4d866468-6a1a-4d50-b1b4-127d0a429837', address='450049, Респ Башкортостан, г Уфа, ул Баязита Бикбая, д. 29', apartment='10')
     print(await _get_court_debt_api_response('66c35881-1591-49b2-b268-8b2c09e1652f', '35', False))
+    # await _db_insert_subrequest('04c60b30-82fd-11f0-bd25-0d027e05e6bc', '2025-08-08', 'Имеется')
+
 
 if __name__ == '__main__':
     import asyncio

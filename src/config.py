@@ -24,6 +24,12 @@ class RinocaConfig:
             },
             'mobill': {
                 'key': ''
+            },
+            'email': {
+                'sender_email': '',
+                'password': '',
+                'smtp_server': '',
+                'smtp_port': ''
             }
         }
         # Чтение конфигурационного файла

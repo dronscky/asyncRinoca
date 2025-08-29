@@ -18,7 +18,7 @@ from src.api.gdrive.gsheet import (HeaderMixin,
                                    cast_column_to_A1_note,
                                    share_spreadsheet)
 from src.api.gdrive.schema import GReportAttributes
-from src.emails import get_email_addresses
+from src.emails.emails import get_email_addresses
 from src.debt.schema import SubrequestCheckDetails
 from src.log.log import logger
 
