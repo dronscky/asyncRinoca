@@ -13,6 +13,8 @@ class SubrequestCheckDetails:
     apartment: str
     persons: str
     account: str
+    doc_arm_number: str
+    doc_date: str
     case_number: str
     sum_debt: float
     penalty: float

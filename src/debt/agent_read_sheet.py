@@ -6,6 +6,7 @@ from src.api.gdrive.gsheet import delete_spreadsheet_by_id
 from src.api.db.db import select_command, execute_command
 from src.debt.gsheet import get_worksheet_data, form_curr_worksheet
 from src.debt.schema import SubrequestCheckDetails
+from src.debt.zsp_status import update_zsp_status
 from src.emails.emails import send_email
 
 
@@ -49,6 +50,7 @@ async def process_report_row(subrequest_details: SubrequestCheckDetails) -> Opti
                 case 'Имеется':
                     await update_subrequest_status(subrequest_details.subrequestguid)
                 case 'Погашена':
+                    await update_zsp_status(subrequest_details)
                     await delete_subrequest(subrequest_details.subrequestguid)
                 case _:
                     return subrequest_details
