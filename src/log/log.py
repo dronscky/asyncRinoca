@@ -2,13 +2,20 @@ import logging
 import logging.config as lc
 from pathlib import Path
 
-path_log_info = Path(__file__).resolve().parent / 'info.log'
-path_log_err = Path(__file__).resolve().parent / 'error.log'
+from src.config import project_config
+
+path_log_info = Path(__file__).resolve().parent.parent.parent / 'log/info.log'
+path_log_err = Path(__file__).resolve().parent.parent.parent / 'log/error.log'
 
 
 class InfoLvlFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.levelname == 'INFO'
+
+
+class ErrorLvlFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelname == 'ERROR'
 
 
 logger_config = {
@@ -17,6 +24,18 @@ logger_config = {
     'formatters': {
         'std_format': {
             'format': '{name} - {asctime} - {levelname} - {module}: {funcName}: {lineno} - {message}',
+            'style': '{'
+        },
+        'email_format': {
+            'format': '🚨 ОШИБКА В СИСТЕМЕ 🚨\n\n'
+                      '📅 Время: {asctime}\n'
+                      '🏷️ Логгер: {name}\n'
+                      '🚨 Уровень: {levelname}\n'
+                      '📁 Модуль: {module}\n'
+                      '🔢 Строка: {lineno}\n'
+                      '📝 Сообщение: {message}\n\n'
+                      '---\n'
+                      'Автоматическое уведомление системы',
             'style': '{'
         }
     },
@@ -39,18 +58,36 @@ logger_config = {
             'encoding': 'utf-8',
             'maxBytes': 102400,
             'backupCount': 3
+        },
+        'email_handler': {
+            '()': 'logging.handlers.SMTPHandler',
+            'level': 'ERROR',
+            'formatter': 'email_format',
+            'filters': ['error_lvl'],
+            'mailhost': (project_config.config.get('email', 'smtp_server'),
+                         project_config.config.get('email', 'smtp_port')),
+            'fromaddr': project_config.config.get('email', 'sender_email'),
+            'toaddrs': project_config.config.get('email', 'smtp_server').split(','),
+            'subject': '🚨 Ошибка в приложении asyncRinoca12',
+            'credentials': (project_config.config.get('email', 'sender_email'),
+                            project_config.config.get('email', 'password')),
+            'secure': (),
+            'timeout': 30
         }
     },
     'loggers': {
         'sys_logger': {
             'level': 'INFO',
-            'handlers': ['err_file', 'info_file'],
+            'handlers': ['err_file', 'info_file', 'email_handler'],
             'propagate': False
         }
     },
     'filters': {
         'info_lvl': {
             '()': InfoLvlFilter
+        },
+        'error_lvl': {
+            '()': ErrorLvlFilter
         }
     }
 }

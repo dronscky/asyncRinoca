@@ -1,5 +1,4 @@
 import asyncio
-import uuid
 from functools import wraps
 from pathlib import Path
 from typing import Iterable, Optional
@@ -7,12 +6,9 @@ from typing import Iterable, Optional
 from google.oauth2.service_account import Credentials
 from gspread import exceptions
 from gspread_asyncio import (AsyncioGspreadClientManager,
-                             AsyncioGspreadSpreadsheet,
                              AsyncioGspreadWorksheet,
                              AsyncioGspreadClient)
 
-
-from src.api.gdrive.utils import is_valid_uuid
 from src.log.log import logger
 
 
@@ -34,7 +30,7 @@ class GoogleAsyncAPI:
     @classmethod
     async def create(cls):
         def _get_creds():
-            conf_path = Path(__file__).resolve().parent / 'creds.json'
+            conf_path = Path(__file__).resolve().parent.parent.parent.parent / 'conf/creds.json'
             creds = Credentials.from_service_account_file(str(conf_path))
             scoped = creds.with_scopes([
                 "https://spreadsheets.google.com/feeds",
@@ -79,26 +75,6 @@ async def delete_spreadsheets_by_title(title: str, client: AsyncioGspreadClient)
 async def delete_spreadsheet_by_id(spreadsheet_id: str, client: AsyncioGspreadClient):
     """Удалить таблицу"""
     await client.del_spreadsheet(spreadsheet_id)
-
-
-# async def create_spreadsheet(title: str, client: AsyncioGspreadClient) -> AsyncioGspreadSpreadsheet:
-#     return await client.create(title)
-#
-#
-# async def open_spreadsheet(spreadsheet_id: str, client: AsyncioGspreadClient) -> AsyncioGspreadSpreadsheet:
-#     return await client.open_by_key(spreadsheet_id)
-#
-#
-# @connect_google_api
-# async def get_worksheet(ss_title_or_id: str, client: AsyncioGspreadClient, worksheet_index: int=0) -> AsyncioGspreadWorksheet:
-#     if is_valid_uuid(ss_title_or_id):
-#         ss = await open_spreadsheet(ss_title_or_id, client)
-#     elif isinstance(ss_title_or_id, str):
-#        ss = await create_spreadsheet(ss_title_or_id, client)
-#     else:
-#         logger.error(f'Неверное значение {ss_title_or_id}')
-#         raise
-#     return await ss.get_worksheet(worksheet_index)
 
 
 async def share_spreadsheet(gc: AsyncioGspreadClient, ss_id: str, emails: Iterable[str]):

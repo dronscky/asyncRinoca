@@ -12,7 +12,7 @@ from src.log.log import logger
 def get_email_addresses(emails_type: Literal['gmails', 'sah_mails']) -> Sequence[str]:
     """чтение файла с почтовыми адресами
     """
-    path = Path(__file__).resolve().parent / 'emails.json'
+    path = Path(__file__).resolve().parent.parent.parent / 'conf/emails.json'
     with open(path, 'r') as f:
         data = json.load(f)
 

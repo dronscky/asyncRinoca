@@ -1,10 +1,9 @@
-import asyncio
 import base64
 from dataclasses import dataclass, astuple
 from datetime import datetime
 import json
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from src.api.db.db import execute_command
 from src.log.log import logger
@@ -65,8 +64,29 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
 
     """
     debtors_data = []
-    if api_response := await _get_court_debt_api_response(subrequest_data.fiasHouseGUID, subrequest_data.apartment, getfile):
-        for debt_account in api_response:
+
+    if subrequest_data.fiasHouseGUID:
+        params = {
+            'houseguid': subrequest_data.fiasHouseGUID,
+            'apartment': subrequest_data.apartment
+        }
+    else:
+
+        if subrequest_data.apartment:
+            address = f'{subrequest_data.address}, кв. {subrequest_data.apartment}'
+        else:
+            address = subrequest_data.address
+        params = {
+            'address': address
+        }
+
+    api_response = await get_court_debt_mob_api_response(params, getfile)
+
+    if api_response.get('ERROR'):
+        logger.info(f'На запрос {subrequest_data} ответ Мобилл {api_response}')
+
+    else:
+        for debt_account in _process_mob_json_response(api_response):
             if getfile:
                 debtors_data.append(GISDebtorsData(persons=debt_account.persons,
                                                    files=await get_upload_files_data(debt_account.files)))
@@ -93,16 +113,6 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
         await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate)
 
     return GISResponseDataFormat(subrequestGUID=subrequest_data.subrequestGUID, debtorsData=debtors_data)
-
-
-async def _get_court_debt_api_response(house_fias: str, apartment: str, getfile: bool) -> Optional[list[DebtApiResponseData]]:
-    params = {
-        # перечень ключей словаря параметров для поиска согласно API Mobill для поиска задолженности
-        'houseguid': house_fias,
-        'apartment': apartment
-    }
-    json_response = await get_court_debt_mob_api_response(params, getfile)
-    return _process_mob_json_response(json_response)
 
 
 async def _db_insert_check_subrequest(subrequest_details: SubrequestCheckDetails):
@@ -177,14 +187,12 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                         ext_params=ext_params
                     )
                     resp_data.append(data)
-    else:
-        logger.info(mobill_json_response)
     return resp_data
 
 
 async def main():
     # SubrequestData(subrequestGUID='10eef6e0-744f-11f0-ac99-1b3e4c2a9278', sentDate='2025-08-08', responseDate='2025-08-15', fiasHouseGUID='4d866468-6a1a-4d50-b1b4-127d0a429837', address='450049, Респ Башкортостан, г Уфа, ул Баязита Бикбая, д. 29', apartment='10')
-    print(await _get_court_debt_api_response('66c35881-1591-49b2-b268-8b2c09e1652f', '35', False))
+    print(await _get_response_format_data(SubrequestData(subrequestGUID='b44f2780-875d-11f0-8dcb-6bd2b6648805', sentDate='2025-09-01', responseDate='2025-09-08', fiasHouseGUID=None, address='452550, Респ Башкортостан, р-н Мечетлинский, с Большеустьикинское, ул Ленина, д. 8', apartment='4'), False))
     # await _db_insert_subrequest('04c60b30-82fd-11f0-bd25-0d027e05e6bc', '2025-08-08', 'Имеется')
 
 

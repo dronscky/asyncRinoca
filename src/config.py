@@ -1,13 +1,13 @@
 from configparser import ConfigParser
 from pathlib import Path
 
-from src.log.log import logger
+# from src.log.log import logger
 
 
 class RinocaConfig:
     def __init__(self):
         self.config = ConfigParser()
-        self.file = Path(__file__).resolve().parent / 'config.ini'
+        self.file = Path(__file__).resolve().parent.parent / 'conf/config.ini'
         self.struct = {
             'crypto': {
                 'openssl': '',
@@ -29,7 +29,8 @@ class RinocaConfig:
                 'sender_email': '',
                 'password': '',
                 'smtp_server': '',
-                'smtp_port': ''
+                'smtp_port': '',
+                'admin_emails': ''
             }
         }
         # Чтение конфигурационного файла
@@ -66,10 +67,10 @@ class RinocaConfig:
                     self.config[section][k] = v
                     self._save_config_file()
                     logger.error(f'Добавлен пустой атрибут {k} в секцию {section} в конфигурационный файл. Пропишите значение')
-                    raise
+                    raise ValueError(f'Отсутствует атрибут {k} в секции {section}')
                 if self.config[section][k] == '':
                     logger.error(f'Отсутствует значение атрибута {k} в секции {section} в конфигурационный файле')
-                    raise
+                    raise ValueError(f'Пустое значение атрибута {k} в секции {section}')
 
 
     def _save_config_file(self) -> None:
@@ -80,5 +81,4 @@ class RinocaConfig:
 try:
     project_config = RinocaConfig()
 except:
-    logger.error('Ошибка в конфигурационном файле!')
     raise Exception('Ошибка в конфигурационном файле!')
