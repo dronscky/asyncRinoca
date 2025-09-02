@@ -165,10 +165,10 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                 if last_document:
                     ext_params = DebtApiResponseExtendedParams(account=account['Identifier'],
                                                                case_number=last_document['DocumentEntry']['CaseNumber'],
-                                                               sum_debt=last_document['SumDebt'],
-                                                               penalty=last_document['SumDebtPenalty'],
-                                                               duty=last_document['SumDebtDuty'],
-                                                               total=last_document['SumDebtTotal'])
+                                                               sum_debt=last_document['DocumentEntry']['SumDebt'],
+                                                               penalty=last_document['DocumentEntry']['Penalty'],
+                                                               duty=last_document['DocumentEntry']['StampDuty'],
+                                                               total=last_document['DocumentEntry']['SumTotal'])
 
                     files = []
                     if last_document.get('File'):
@@ -192,7 +192,7 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
 
 async def main():
     # SubrequestData(subrequestGUID='10eef6e0-744f-11f0-ac99-1b3e4c2a9278', sentDate='2025-08-08', responseDate='2025-08-15', fiasHouseGUID='4d866468-6a1a-4d50-b1b4-127d0a429837', address='450049, Респ Башкортостан, г Уфа, ул Баязита Бикбая, д. 29', apartment='10')
-    print(await _get_response_format_data(SubrequestData(subrequestGUID='b44f2780-875d-11f0-8dcb-6bd2b6648805', sentDate='2025-09-01', responseDate='2025-09-08', fiasHouseGUID=None, address='452550, Респ Башкортостан, р-н Мечетлинский, с Большеустьикинское, ул Ленина, д. 8', apartment='4'), False))
+    print(await _get_response_format_data(SubrequestData(subrequestGUID='b44f2780-875d-11f0-8dcb-6bd2b6648805', sentDate='2025-09-01', responseDate='2025-09-08', fiasHouseGUID=None, address='452492, Респ Башкортостан, р-н Салаватский, с Янгантау, ул Салавата Юлаева, д. 1', apartment='6'), False))
     # await _db_insert_subrequest('04c60b30-82fd-11f0-bd25-0d027e05e6bc', '2025-08-08', 'Имеется')
 
 
