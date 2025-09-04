@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from dataclasses import dataclass, astuple
 from datetime import datetime
@@ -8,7 +9,7 @@ from typing import Any, Optional
 from src.api.db.db import execute_command
 from src.log.log import logger
 from src.api.gis.file import File
-from src.api.mobill.api import get_court_debt_mob_api_response
+from src.api.mobill.api import get_court_debt
 from src.debt.file import get_upload_files_data
 from src.debt.schema import GISDebtorsData, PersonName, GISResponseDataFormat, SubrequestData, SubrequestCheckDetails
 
@@ -19,6 +20,8 @@ class DebtApiResponseFile(File):...
 @dataclass(frozen=True)
 class DebtApiResponseExtendedParams:
     account: str
+    doc_arm_number: str
+    doc_date: str
     case_number: str
     sum_debt: float
     penalty: float
@@ -51,8 +54,12 @@ def find_sp_filename(filename: str) -> str:
 
 async def get_responses_data(subrequests_data: list[SubrequestData], getfile: bool = False) -> list[GISResponseDataFormat]:
     tasks = [_get_response_format_data(subrequest_data, getfile) for subrequest_data in subrequests_data]
-    result = await asyncio.gather(*tasks)
-    return [*result]
+    try:
+        result = await asyncio.gather(*tasks, return_exceptions=True)
+        return [*result]
+    except Exception as e:
+        logger.error(e)
+        raise
 
 
 async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bool) -> GISResponseDataFormat:
@@ -70,8 +77,8 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
             'houseguid': subrequest_data.fiasHouseGUID,
             'apartment': subrequest_data.apartment
         }
-    else:
 
+    else:
         if subrequest_data.apartment:
             address = f'{subrequest_data.address}, кв. {subrequest_data.apartment}'
         else:
@@ -80,8 +87,7 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
             'address': address
         }
 
-    api_response = await get_court_debt_mob_api_response(params, getfile)
-
+    api_response = await get_court_debt(params, getfile)
     if api_response.get('ERROR'):
         logger.info(f'На запрос {subrequest_data} ответ Мобилл {api_response}')
 
@@ -91,7 +97,8 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
                 debtors_data.append(GISDebtorsData(persons=debt_account.persons,
                                                    files=await get_upload_files_data(debt_account.files)))
             else:
-                persons = ', '.join([repr(p) for p in debt_account.persons])
+                # persons = ','.join([repr(p) for p in debt_account.persons])
+                persons = '\n'.join([repr(p) for p in debt_account.persons])
                 await _db_insert_check_subrequest(SubrequestCheckDetails(sent_date=subrequest_data.sentDate,
                                                                          response_date=subrequest_data.responseDate,
                                                                          subrequestguid=subrequest_data.subrequestGUID,
@@ -100,6 +107,8 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
                                                                          apartment=subrequest_data.apartment,
                                                                          persons=persons,
                                                                          account=debt_account.ext_params.account,
+                                                                         doc_arm_number=debt_account.ext_params.doc_arm_number,
+                                                                         doc_date=debt_account.ext_params.doc_date,
                                                                          case_number=debt_account.ext_params.case_number,
                                                                          sum_debt=debt_account.ext_params.sum_debt,
                                                                          penalty=debt_account.ext_params.penalty,
@@ -118,8 +127,8 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
 async def _db_insert_check_subrequest(subrequest_details: SubrequestCheckDetails):
     sql = """
         insert into details_a (sent_date, response_date, subrequestguid, fias, address, apartment, 
-                               persons, account, case_number, sum_debt, penalty, duty, total)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               persons, account, doc_arm_number, doc_date, case_number, sum_debt, penalty, duty, total)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     try:
         await execute_command(sql, *astuple(subrequest_details)[:-1])
@@ -150,52 +159,59 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
     if accounts := mobill_json_response.get('Data'):
         # Перебираем все лс найденные по адресу на наличие неоплаченных ЗСП ПИР и если на одном лс их несколько,
         # то выбираем самое позднее ЗСП, данные которого будут отправлены в ГИС ЖКХ
-        for account in accounts:
-            court_debt = account.get('CourtDebt', {})
-            if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
-                last_document = None
+        addresses = {account.get('Address') for account in accounts}
+        if len(addresses) == 1:
+            for account in accounts:
 
-                for document in documents:
-                    case_number = document['DocumentEntry'].get('CaseNumber', '')
-                    if isinstance(case_number, str) and case_number:
-                        document_date = datetime.strptime(document['DateDoc'], '%d.%m.%Y')
-                        if last_document is None or document_date > datetime.strptime(last_document['DateDoc'], '%d.%m.%Y'):
-                            last_document = document
+                if account.get('ContractStatus') == 'Расторгнут':
+                  continue
 
-                if last_document:
-                    ext_params = DebtApiResponseExtendedParams(account=account['Identifier'],
-                                                               case_number=last_document['DocumentEntry']['CaseNumber'],
-                                                               sum_debt=last_document['DocumentEntry']['SumDebt'],
-                                                               penalty=last_document['DocumentEntry']['Penalty'],
-                                                               duty=last_document['DocumentEntry']['StampDuty'],
-                                                               total=last_document['DocumentEntry']['SumTotal'])
+                court_debt = account.get('CourtDebt', {})
+                if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
+                    last_document = None
 
-                    files = []
-                    if last_document.get('File'):
-                        for file in last_document['File']:
-                            if file_name := find_sp_filename(file['FileName']):
-                                file_content = ''.join(file_chunk.replace('\n', '') for file_chunk in file['FileContent'])
-                                f = DebtApiResponseFile(
-                                    filename=file_name,
-                                    file=base64.b64decode(file_content)
-                                )
-                                files.append(f)
+                    for document in documents:
+                        case_number = document['DocumentEntry'].get('CaseNumber', '')
+                        if isinstance(case_number, str) and case_number:
+                            document_date = datetime.strptime(document['DateDoc'], '%d.%m.%Y')
+                            if last_document is None or document_date > datetime.strptime(last_document['DateDoc'], '%d.%m.%Y'):
+                                last_document = document
 
-                    data = DebtApiResponseData(
-                        persons=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
-                        files=files,
-                        ext_params=ext_params
-                    )
-                    resp_data.append(data)
+                    if last_document:
+                        ext_params = DebtApiResponseExtendedParams(account=account['Identifier'],
+                                                                   doc_arm_number=last_document['Number'],
+                                                                   doc_date=last_document['DateDoc'],
+                                                                   case_number=last_document['DocumentEntry']['CaseNumber'],
+                                                                   sum_debt=last_document['DocumentEntry']['SumDebt'],
+                                                                   penalty=last_document['DocumentEntry']['Penalty'],
+                                                                   duty=last_document['DocumentEntry']['StampDuty'],
+                                                                   total=last_document['DocumentEntry']['SumTotal'])
+
+                        files = []
+                        if last_document.get('File'):
+                            for file in last_document['File']:
+                                if file_name := find_sp_filename(file['FileName']):
+                                    file_content = ''.join(file_chunk.replace('\n', '') for file_chunk in file['FileContent'])
+                                    f = DebtApiResponseFile(
+                                        filename=file_name,
+                                        file=base64.b64decode(file_content)
+                                    )
+                                    files.append(f)
+
+                        data = DebtApiResponseData(
+                            persons=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
+                            files=files,
+                            ext_params=ext_params
+                        )
+                        resp_data.append(data)
     return resp_data
 
 
 async def main():
     # SubrequestData(subrequestGUID='10eef6e0-744f-11f0-ac99-1b3e4c2a9278', sentDate='2025-08-08', responseDate='2025-08-15', fiasHouseGUID='4d866468-6a1a-4d50-b1b4-127d0a429837', address='450049, Респ Башкортостан, г Уфа, ул Баязита Бикбая, д. 29', apartment='10')
-    print(await _get_response_format_data(SubrequestData(subrequestGUID='b44f2780-875d-11f0-8dcb-6bd2b6648805', sentDate='2025-09-01', responseDate='2025-09-08', fiasHouseGUID=None, address='452492, Респ Башкортостан, р-н Салаватский, с Янгантау, ул Салавата Юлаева, д. 1', apartment='6'), False))
+    print(await _get_response_format_data(SubrequestData(subrequestGUID='b44f2780-875d-11f0-8dcb-6bd2b6648805', sentDate='2025-09-01', responseDate='2025-09-08', fiasHouseGUID=None, address='452550, Респ Башкортостан, р-н Мечетлинский, с Большеустьикинское, ул Ленина, д. 8', apartment=''), False))
     # await _db_insert_subrequest('04c60b30-82fd-11f0-bd25-0d027e05e6bc', '2025-08-08', 'Имеется')
 
 
 if __name__ == '__main__':
-    import asyncio
     asyncio.run(main())

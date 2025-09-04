@@ -51,9 +51,9 @@ class ReaderExportDSRsResult(ReaderXML):
             if request_state_val == '3':
                 message_guid = self.get_element('//ns4:MessageGUID').text
                 error_desc = self.get_element('//ns4:ErrorMessage/ns4:Description')
-                if not error_desc:
-                    page = self.get_element('//ns13:lastPage')
-                    if page is not None:
+                if error_desc is None:
+                    last_page = self.get_element('//ns13:lastPage')
+                    if last_page is not None:
                         next_sub = 'last'
                     else:
                         next_guid = self.get_element('//ns13:nextSubrequestGUID')
@@ -99,7 +99,7 @@ class ReaderExportDSRsResult(ReaderXML):
                 else:
                     if error_desc.text != 'Нет объектов для экспорта':
                         logger.error(error_desc.text)
-                        raise
+                        raise ValueError(error_desc.text)
                     return None
             else:
                 return 'wait'

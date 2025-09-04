@@ -23,7 +23,7 @@ async def _request(session: aiohttp.ClientSession, url: str, data: dict[str, Any
         async with session.post(url=url, data=data) as response:
             if response.status == 200:
                 json_response = json.loads(await response.text(encoding='utf-8'))
-                print(json_response)
+                # print(json_response)
                 return json_response
             else:
                 logger.error(response.status)

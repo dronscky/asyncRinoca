@@ -12,7 +12,7 @@ from src.log.log import logger
 async def _get_check_subrequests() -> Optional[list[SubrequestCheckDetails]]:
     sql = """
         select sent_date, response_date, subrequestguid, fias, address, apartment, 
-               persons, account, case_number, sum_debt, penalty, duty, total
+               persons, account, doc_arm_number, doc_date, case_number, sum_debt, penalty, duty, total
         from details_a
         where is_exp = 0
     """

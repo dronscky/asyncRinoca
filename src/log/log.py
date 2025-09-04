@@ -67,7 +67,7 @@ logger_config = {
             'mailhost': (project_config.config.get('email', 'smtp_server'),
                          project_config.config.get('email', 'smtp_port')),
             'fromaddr': project_config.config.get('email', 'sender_email'),
-            'toaddrs': project_config.config.get('email', 'smtp_server').split(','),
+            'toaddrs': project_config.config.get('email', 'admin_emails').split(','),
             'subject': '🚨 Ошибка в приложении asyncRinoca12',
             'credentials': (project_config.config.get('email', 'sender_email'),
                             project_config.config.get('email', 'password')),
