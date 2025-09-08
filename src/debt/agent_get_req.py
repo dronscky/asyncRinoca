@@ -1,6 +1,7 @@
 import asyncio
 
 from src.base.delay import get_delay_time
+from src.emails.emails import send_email_to_admins
 from src.base.state import GetStateXML
 from src.base.reader import get_ack_message_guid
 from src.debt.debt_xml import ExportDebtSubrequests, SendImportDebtResponses
@@ -9,12 +10,13 @@ from src.debt.reader import get_exportDSRsData
 from src.debt.service import export_debt_subrequests, import_debt_responses, state_request
 from src.debt.state import check_import_responses_state
 from src.log.log import logger
+from src.utils import counter
 
 
 async def worker():
     sub = None
     is_over = False
-    request_count = 0
+    srv_request_count = 0
 
     while True:
         # 1.  Формируем и отправляем XML на наличие задолженности
@@ -40,10 +42,10 @@ async def worker():
         #  Обрабатываем ответ на запрос о наличии задолженности
         if data:
             if data == 'wait':
-                await asyncio.sleep(get_delay_time(request_count))
-                request_count += 1
+                await asyncio.sleep(get_delay_time(srv_request_count))
+                srv_request_count += 1
             else:
-                request_count = 0
+                srv_request_count = 0
                 if data.next == 'last':
                     is_over = True
                 else:
@@ -68,6 +70,9 @@ async def worker():
             is_over = True
 
         if is_over:
+            message = f'Отвечено на {counter.get_total_subrequests()} запросов на проверку {counter.get_check_subrequests()}'
+            send_email_to_admins('Количество отправленных запросов', message)
+            logger.info(message)
             break
 
 

@@ -7,7 +7,7 @@ from src.api.db.db import select_command, execute_command
 from src.debt.gsheet import get_worksheet_data, form_curr_worksheet
 from src.debt.schema import SubrequestCheckDetails
 from src.debt.zsp_status import update_zsp_status
-from src.emails.emails import send_email
+from src.emails.emails import send_email_to_buhs
 
 
 async def get_spreadsheets_attrs() -> Optional[tuple[GReportAttributes, ...]]:
@@ -73,7 +73,7 @@ async def handler():
 
             if unprocessed_requests:
                 await form_curr_worksheet(ss.report_id, unprocessed_requests)
-                send_email(ss.title, 'Во время проверки были пропущены строки!')
+                send_email_to_buhs(ss.title, 'Во время проверки были пропущены строки!')
             else:
                 await delete_spreadsheet_by_id(ss.report_id)
                 await delete_report(ss.report_id)

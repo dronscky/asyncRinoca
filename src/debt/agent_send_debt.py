@@ -1,4 +1,5 @@
 import asyncio
+
 from typing import Optional
 
 from src.api.db.db import select_command, executemany_command
@@ -11,6 +12,8 @@ from src.debt.schema import GISResponseDataFormat, SubrequestData
 from src.debt.service import import_debt_responses
 from src.debt.state import check_import_responses_state
 from src.log.log import logger
+from src.emails.emails import send_email_to_admins
+from src.utils import counter
 
 
 async def get_debt_requests() -> Optional[list[SubrequestData]]:
@@ -43,6 +46,7 @@ async def worker() -> None:
             tasks.append(_response_handler(batch))
 
     await asyncio.gather(*tasks, return_exceptions=True)
+    send_email_to_admins('Отправлено положительных ответов', f'{counter.get_debtor_subrequests()}')
 
 
 async def _response_handler(requests: list[SubrequestData]) -> None:

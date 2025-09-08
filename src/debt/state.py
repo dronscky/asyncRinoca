@@ -13,15 +13,16 @@ async def check_import_responses_state(message_guid: str) -> int:
     attempt_count = 0
     while True:
         ack = await state_request(state_imp.get_xml())
-        if get_ack_import_responses_state(ack) == '3':
+        state = get_ack_import_responses_state(ack)
+        if state == '3':
             logger.info('Успешный импорт ответов на запрос')
             return 1
-        elif get_ack_import_responses_state(ack) in ('1', '2'):
+        elif state in ('1', '2'):
             await asyncio.sleep(get_delay_time(attempt_count))
             attempt_count += 1
             if attempt_count == 5:
                 logger.error('Количество попыток на проверку состояния превышено!')
                 raise
         else:
-            logger.error('Ошибка обработки на стороне ГИС ЖКХ')
+            logger.error(f'Ошибка обработки: {state}')
             raise

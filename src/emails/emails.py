@@ -51,7 +51,16 @@ class EmailSender:
             logger.error(e)
 
 
-def send_email(subj_txt: str, mess_txt: str) -> None:
-    recipients = get_email_addresses('sah_mails')
+def _send_email(recipients: Sequence[str], subj_txt: str, mess_txt: str) -> None:
     es = EmailSender(recipients)
     es.send_message(subj_txt, mess_txt)
+
+
+def send_email_to_buhs(subj_txt: str, mess_txt: str) -> None:
+    recipients = get_email_addresses('sah_mails')
+    _send_email(recipients,subj_txt, mess_txt)
+
+
+def send_email_to_admins(subj_txt: str, mess_txt: str) -> None:
+    recipients = ['vasiliev-a@sahufa.ru']
+    _send_email(recipients, subj_txt, mess_txt)

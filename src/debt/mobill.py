@@ -12,6 +12,7 @@ from src.api.gis.file import File
 from src.api.mobill.api import get_court_debt
 from src.debt.file import get_upload_files_data
 from src.debt.schema import GISDebtorsData, PersonName, GISResponseDataFormat, SubrequestData, SubrequestCheckDetails
+from src.utils import counter
 
 
 class DebtApiResponseFile(File):...
@@ -31,15 +32,15 @@ class DebtApiResponseExtendedParams:
 
 @dataclass(frozen=True)
 class DebtApiResponseData:
-    persons: list[PersonName]
+    persons: set[PersonName]
     files: list[DebtApiResponseFile]
     ext_params: DebtApiResponseExtendedParams = None
 
 
-def split_debtors_names(persons: list[str] | str) -> list[PersonName]:
+def split_debtors_names(persons: list[str] | str) -> set[PersonName]:
     if isinstance(persons, str):
-        return [PersonName(*persons.split())]
-    return [PersonName(*person.split()) for person in persons]
+        return {PersonName(*persons.split(maxsplit=2))}
+    return {PersonName(*person.split(maxsplit=2)) for person in persons}
 
 
 def find_sp_filename(filename: str) -> str:
@@ -92,6 +93,7 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
         logger.info(f'На запрос {subrequest_data} ответ Мобилл {api_response}')
 
     else:
+        counter.increment_total_subrequest()
         for debt_account in _process_mob_json_response(api_response):
             if getfile:
                 debtors_data.append(GISDebtorsData(persons=debt_account.persons,
@@ -115,9 +117,10 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
                                                                          duty=debt_account.ext_params.duty,
                                                                          total=debt_account.ext_params.total
                                                                          ))
-
+                counter.increment_check_subrequest()
     if debtors_data:
         await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate, 'Имеется')
+        counter.increment_debtor_subrequest()
     else:
         await _db_insert_subrequest(subrequest_data.subrequestGUID, subrequest_data.sentDate)
 
@@ -204,7 +207,9 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                             ext_params=ext_params
                         )
                         resp_data.append(data)
-    return resp_data
+    # На портале не продуман момент, когда на одном адресе несколько лс, при том эти лс имеют задолженность.
+    # Решением пока вижу возвращать срез, где данные первого лс
+    return resp_data[:1] if resp_data else []
 
 
 async def main():

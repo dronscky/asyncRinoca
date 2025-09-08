@@ -65,7 +65,7 @@ class PersonName:
 
 @dataclass(frozen=True)
 class GISDebtorsData:
-    persons: list[PersonName] = field(default_factory=list)
+    persons: set[PersonName] = field(default_factory=list)
     files: list[GISFileDataFormat] = field(default_factory=list)
 
 
