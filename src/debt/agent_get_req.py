@@ -70,7 +70,7 @@ async def worker():
             is_over = True
 
         if is_over:
-            message = f'Отвечено на {counter.get_total_subrequests()} запросов на проверку {counter.get_check_subrequests()}'
+            message = f'Отвечено на {counter.get_total_subrequests()} запросов - на проверку {counter.get_check_subrequests()}'
             send_email_to_admins('Количество отправленных запросов', message)
             logger.info(message)
             break

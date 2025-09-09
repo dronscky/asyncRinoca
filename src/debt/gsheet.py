@@ -35,7 +35,7 @@ class WorksheetHeader(HeaderMixin):
                      'Бухгалтерия']
 
 
-@connect_google_api
+@connect_google_api('rinoca')
 async def create_spreadsheet(title: str, rows: list[SubrequestCheckDetails], client: AsyncioGspreadClient) -> None:
     ss = await client.create(title)
     ws = await ss.get_worksheet(0)
@@ -84,7 +84,7 @@ async def form_worksheet(ws: AsyncioGspreadWorksheet, rows: list[SubrequestCheck
     await _protect_cells(f'{cast_column_to_A1_note(wh.COUNT_HEADER_COLUMNS - 1)}{len(rows) + wh.COUNT_HEADER_ROWS}')
 
 
-@connect_google_api
+@connect_google_api('rinoca')
 async def get_worksheet_data(ss_id: str, client: AsyncioGspreadClient) -> Optional[list[SubrequestCheckDetails]]:
     ss = await client.open_by_key(ss_id)
     ws = await ss.get_worksheet(0)
@@ -93,7 +93,7 @@ async def get_worksheet_data(ss_id: str, client: AsyncioGspreadClient) -> Option
     return [SubrequestCheckDetails(*row) for row in values[wh.COUNT_HEADER_ROWS:]]
 
 
-@connect_google_api
+@connect_google_api('rinoca')
 async def form_curr_worksheet(ss_id: str, rows: list[SubrequestCheckDetails], client: AsyncioGspreadClient) -> None:
     ss = await client.open_by_key(ss_id)
     ws = await ss.get_worksheet(0)

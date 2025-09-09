@@ -6,6 +6,7 @@ import src.debt.agent_create_sheet
 import src.debt.agent_get_req
 import src.debt.agent_send_debt
 import src.debt.agent_read_sheet
+import src.debt.agent_mng_report
 from src.api.db.db import select_command, execute_command
 from src.log.log import logger
 
@@ -35,7 +36,8 @@ class BaseAgent(Agent, ABC):
         'REQ_AGENT': ('REQ_AGENT', 'RESP_AGENT'),
         'RESP_AGENT': ('REQ_AGENT', 'RESP_AGENT'),
         'REP_R_AGENT': ('REP_C_AGENT', 'REP_R_AGENT'),
-        'REP_C_AGENT': ('REP_C_AGENT', 'REP_R_AGENT')
+        'REP_C_AGENT': ('REP_C_AGENT', 'REP_R_AGENT'),
+        'REP_MNG_AGENT': ('REP_MNG_AGENT', '')
     }
 
     async def is_agent_running(self) -> bool:
@@ -78,6 +80,13 @@ class CreateSpreadsheetAgent(BaseAgent):
         await src.debt.agent_create_sheet.handler()
 
 
+class CreateMngReportAgent(BaseAgent):
+    NAME = 'REP_MNG_AGENT'
+
+    async def run_agent(self):
+        await src.debt.agent_mng_report.handler()
+
+
 async def start_agent(agent: BaseAgent):
     if not await agent.is_agent_running():
         await agent.mark_agent_run(1)
@@ -97,6 +106,7 @@ if __name__ == '__main__':
     subparser.add_parser('send')
     subparser.add_parser('create')
     subparser.add_parser('read')
+    subparser.add_parser('mng')
 
     args = parser.parse_args()
 
@@ -109,5 +119,7 @@ if __name__ == '__main__':
             asyncio.run(start_agent(CreateSpreadsheetAgent()))
         case 'read':
             asyncio.run(start_agent(ReadSpreadsheetAgent()))
+        case 'mng':
+            asyncio.run(start_agent(CreateMngReportAgent()))
         case _:
             parser.print_help()

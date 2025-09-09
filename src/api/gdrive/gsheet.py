@@ -1,7 +1,7 @@
 import asyncio
 from functools import wraps
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Literal
 
 from google.oauth2.service_account import Credentials
 from gspread import exceptions
@@ -28,10 +28,9 @@ class GoogleAsyncAPI:
             raise
 
     @classmethod
-    async def create(cls):
-        def _get_creds():
-            conf_path = Path(__file__).resolve().parent.parent.parent.parent / 'conf/creds.json'
-            creds = Credentials.from_service_account_file(str(conf_path))
+    async def create(cls, profile: Literal['sah', 'rinoca']):
+        def _get_creds(path: Path):
+            creds = Credentials.from_service_account_file(str(path))
             scoped = creds.with_scopes([
                 "https://spreadsheets.google.com/feeds",
                 "https://www.googleapis.com/auth/spreadsheets",
@@ -39,7 +38,23 @@ class GoogleAsyncAPI:
             ])
             return scoped
 
-        agcm = AsyncioGspreadClientManager(_get_creds)
+        def rinoca_service_creds():
+            path = Path(__file__).resolve().parents[3] / 'conf/creds.json'
+            return _get_creds(path)
+
+        def sah_service_creds():
+            path = Path(__file__).resolve().parents[3] / 'conf/sah.json'
+            return _get_creds(path)
+
+        match profile:
+            case 'rinoca':
+                agcm = AsyncioGspreadClientManager(rinoca_service_creds)
+            case 'sah':
+                agcm = AsyncioGspreadClientManager(sah_service_creds)
+            case _:
+                logger.error('Неверно указан профиль авторизации Google')
+                raise
+
         agc = await agcm.authorize()
         return cls(agc)
 
@@ -48,17 +63,19 @@ class GoogleAsyncAPI:
         return self._gc
 
 
-def connect_google_api(f):
-    @wraps(f)
-    async def wrapper(*args, **kwargs):
-        con = await GoogleAsyncAPI.create()
-        gc = con.client
-        res = await f(*args, client=gc, **kwargs)
-        return res
-    return wrapper
+def connect_google_api(profile):
+    def decorator(f):
+        @wraps(f)
+        async def wrapper(*args, **kwargs):
+            con = await GoogleAsyncAPI.create(profile)
+            gc = con.client
+            res = await f(*args, client=gc, **kwargs)
+            return res
+        return wrapper
+    return decorator
 
 
-@connect_google_api
+@connect_google_api('rinoca')
 async def delete_spreadsheets_by_title(title: str, client: AsyncioGspreadClient):
     count = 0
     while True:
@@ -71,7 +88,7 @@ async def delete_spreadsheets_by_title(title: str, client: AsyncioGspreadClient)
             break
 
 
-@connect_google_api
+@connect_google_api('rinoca')
 async def delete_spreadsheet_by_id(spreadsheet_id: str, client: AsyncioGspreadClient):
     """Удалить таблицу"""
     await client.del_spreadsheet(spreadsheet_id)
