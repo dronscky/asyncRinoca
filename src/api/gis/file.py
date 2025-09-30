@@ -5,7 +5,7 @@ from typing import Optional
 import aiohttp
 
 from src.config import project_config
-from src.api.gis.utils import calc_hash_by_md5, generate_string, get_file_extension
+from src.api.gis.utils import calc_hash_by_md5, calc_hash_by_gost, generate_string, get_file_extension
 from src.log.log import logger
 
 
@@ -13,6 +13,14 @@ from src.log.log import logger
 class File:
     filename: str
     file: bytes
+
+
+@dataclass(frozen=True)
+class GISFileDataFormat:
+    name: str
+    attachmentGUID: str
+    attachmentHASH: str
+    desc: str = ' '
 
 
 def _split_file(file: bytes, byte_count=5242880) -> list[bytes]:
@@ -77,6 +85,8 @@ async def _single_mode_upload(url: str, file_: File) -> Optional[str]:
         return upload_id
     else:
         logger.error(f'Ошибка отправки файла {file_.filename}')
+        logger.error("Ответ сервера:")
+        logger.error(response)
         raise
 
 
@@ -131,12 +141,17 @@ async def _upload_file(url: str, file_: File) -> str:
     return await _single_mode_upload(url, file_)
 
 
-async def upload_files(url: str, files: list[File]) -> list[str]:
+async def upload_files(url: str, files: list[File]) -> list[GISFileDataFormat]:
     tasks = [_upload_file(url, file_) for file_ in files]
-    results = await asyncio.gather(*tasks)
-    #  Проверка на успешность загрузок
-    if len(results) == len(files):
-        return [*results]
+    tasks_result = await asyncio.gather(*tasks, return_exceptions=True)
 
-    logger.error('Ошибка загрузки файлов')
-    raise
+    results = []
+    for i, file in enumerate(files):
+        if isinstance(tasks_result[i], Exception):
+            logger.error(tasks_result[i])
+            raise ValueError(tasks_result[i])
+
+        results = [GISFileDataFormat(name=file.filename,
+                                     attachmentGUID=tasks_result[i],
+                                     attachmentHASH=calc_hash_by_gost(file.file))]
+    return results

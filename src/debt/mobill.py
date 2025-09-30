@@ -10,7 +10,7 @@ from src.api.db.db import execute_command
 from src.log.log import logger
 from src.api.gis.file import File
 from src.api.mobill.api import get_court_debt
-from src.debt.file import get_upload_files_data
+from src.debt.file import upload_debt_files
 from src.debt.schema import GISDebtorsData, PersonName, GISResponseDataFormat, SubrequestData, SubrequestCheckDetails
 from src.utils import counter
 
@@ -57,6 +57,7 @@ async def get_responses_data(subrequests_data: list[SubrequestData], getfile: bo
     tasks = [_get_response_format_data(subrequest_data, getfile) for subrequest_data in subrequests_data]
     try:
         result = await asyncio.gather(*tasks, return_exceptions=True)
+        # print(result)
         return [*result]
     except Exception as e:
         logger.error(e)
@@ -97,7 +98,7 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
         for debt_account in _process_mob_json_response(api_response):
             if getfile:
                 debtors_data.append(GISDebtorsData(persons=debt_account.persons,
-                                                   files=await get_upload_files_data(debt_account.files)))
+                                                   files=await upload_debt_files(debt_account.files)))
             else:
                 # persons = ','.join([repr(p) for p in debt_account.persons])
                 persons = '\n'.join([repr(p) for p in debt_account.persons])

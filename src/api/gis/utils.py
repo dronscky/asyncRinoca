@@ -7,7 +7,7 @@ from hashlib import md5
 from src.base.crypto import calc_hash_by_gost94
 
 
-def calc_hash_by_md5(obj: bytes):
+def calc_hash_by_md5(obj: bytes) -> str:
     """Получение хэша в md5"""
     hash_obj = md5(obj)
     e = base64.b64encode(hash_obj.digest())

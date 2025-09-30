@@ -23,7 +23,6 @@ async def worker():
         export_subrequests = ExportDebtSubrequests(sub)
         try:
             st1_ack = await export_debt_subrequests(export_subrequests.get_xml())
-
             await asyncio.sleep(2.0)
         except Exception:
             logger.error('Ошибка отправки запроса о наличии задолженности')

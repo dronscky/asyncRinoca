@@ -20,9 +20,12 @@ async def check_import_responses_state(message_guid: str) -> int:
         elif state in ('1', '2'):
             await asyncio.sleep(get_delay_time(attempt_count))
             attempt_count += 1
-            if attempt_count == 5:
+            if attempt_count == 10:
                 logger.error('Количество попыток на проверку состояния превышено!')
                 raise
         else:
-            logger.error(f'Ошибка обработки: {state}')
-            raise
+            if 'не имеет статус \"Ответ отправлен\"' in state:
+                return 1
+            else:
+                logger.error(f'Ошибка обработки: {state}')
+                raise
