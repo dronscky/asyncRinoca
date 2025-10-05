@@ -170,6 +170,10 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                 if account.get('ContractStatus') == 'Расторгнут':
                   continue
 
+                # API в ответе выдает и ЮЛ, поэтому проверка на ФЛ
+                if "Ф-" not in account["ContractNumber"]:
+                    continue
+
                 court_debt = account.get('CourtDebt', {})
                 if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
                     last_document = None

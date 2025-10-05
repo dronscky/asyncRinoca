@@ -151,7 +151,7 @@ async def upload_files(url: str, files: list[File]) -> list[GISFileDataFormat]:
             logger.error(tasks_result[i])
             raise ValueError(tasks_result[i])
 
-        results = [GISFileDataFormat(name=file.filename,
-                                     attachmentGUID=tasks_result[i],
-                                     attachmentHASH=calc_hash_by_gost(file.file))]
+        results.append(GISFileDataFormat(name=file.filename,
+                                         attachmentGUID=tasks_result[i],
+                                         attachmentHASH=calc_hash_by_gost(file.file)))
     return results
