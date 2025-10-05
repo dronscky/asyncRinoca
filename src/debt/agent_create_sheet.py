@@ -29,9 +29,25 @@ async def _update_subrequests_status(subrequestsguid: list[tuple[str]]) -> None:
     await executemany_command(sql, subrequestsguid)
 
 
+async def _check_date(date: str):
+    q = "select * from holidays where date = ?"
+    return await select_command(q, date)
+
+
+async def its_holiday() -> bool:
+    today = datetime.now()
+    if today.weekday() in (5, 6) or await _check_date(today.strftime("%Y-%m-%d")):
+        return True
+    else :
+        return False
+
+
 async def _create_spreadsheet(data: list[SubrequestCheckDetails]) -> None:
     title = f'Отчет на проверку {datetime.now().strftime('%y-%m-%d')}'
     try:
+        if await its_holiday():
+            return None
+
         await create_spreadsheet(title, data)
         m = f'Отчет "{title}" сформирован {datetime.now()}'
         logger.info(m)
@@ -50,4 +66,5 @@ async def handler():
 
 
 if __name__ == '__main__':
-    asyncio.run(handler())
+    # asyncio.run(handler())
+    asyncio.run(its_holiday())
