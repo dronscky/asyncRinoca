@@ -66,5 +66,4 @@ async def handler():
 
 
 if __name__ == '__main__':
-    # asyncio.run(handler())
-    asyncio.run(its_holiday())
+    asyncio.run(handler())

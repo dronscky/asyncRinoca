@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import src.debt.agent_create_sheet
 import src.debt.agent_get_req
-import src.debt.agent_send_debt
+import src.debt.agent_send_debt2
 import src.debt.agent_read_sheet
 import src.debt.agent_mng_report
 from src.api.db.db import select_command, execute_command
@@ -63,7 +63,7 @@ class RespAgent(BaseAgent):
     NAME = 'RESP_AGENT'
 
     async def run_agent(self):
-        await src.debt.agent_send_debt.worker()
+        await src.debt.agent_send_debt2.worker()
 
 
 class ReadSpreadsheetAgent(BaseAgent):

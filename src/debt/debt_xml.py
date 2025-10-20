@@ -156,12 +156,12 @@ class RevokeImportDebtResponses(ImportDebtResponses):
     Формирование xml запроса для отзыва отправленных ответов к порталу ГИС ЖКХ
     """
 
-    def __init__(self, data: list[str]) -> None:
+    def __init__(self, subrequests_guid: list[str]) -> None:
         super().__init__()
-        if len(data) > 100:
-            logger.error(f'Ошибочный размер списка входного списка: {data}')
+        if len(subrequests_guid) > 100:
+            logger.error(f'Ошибочный размер списка входного списка: {subrequests_guid}')
             raise TypeError
-        self.data = data
+        self.subrequests_guid = subrequests_guid
         self._build_body()
 
     def _build_body(self):
@@ -170,10 +170,10 @@ class RevokeImportDebtResponses(ImportDebtResponses):
         data - словарь с ключом subrequestGUID
         """
         ns = self.get_namespaces()
-        for item in self.data:
+        for subrequest_guid in self.subrequests_guid:
             clone = copy.deepcopy(self.action)
             clone.find('base:TransportGUID', namespaces=ns).text = gen_guid()
-            clone.find('drs:subrequestGUID', namespaces=ns).text = item
+            clone.find('drs:subrequestGUID', namespaces=ns).text = subrequest_guid
             clone.find('drs:actionType', namespaces=ns).text = 'Revoke'
             clone.remove(clone.find('drs:responseData', namespaces=ns))
             self.node.append(clone)

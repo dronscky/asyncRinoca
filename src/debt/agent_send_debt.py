@@ -2,7 +2,7 @@ import asyncio
 
 from typing import Optional
 
-from src.api.db.db import select_command, executemany_command
+from src.api.db.db import select_command, executemany_command, execute_command
 
 from src.base.reader import get_ack_message_guid
 
@@ -28,12 +28,15 @@ async def get_debt_requests() -> Optional[list[SubrequestData]]:
     return None
 
 
-async def delete_responses(requests: list[SubrequestData]) -> None:
+async def delete_responses(requests: list[SubrequestData] | SubrequestData) -> None:
     sql = """
         delete from details_a
         where subrequestguid = ?
     """
-    await executemany_command(sql, [(request.subrequestGUID,) for request in requests])
+    if isinstance(requests, list):
+        await executemany_command(sql, [(request.subrequestGUID,) for request in requests])
+    else:
+        await execute_command(sql, requests.subrequestGUID)
 
 
 async def worker() -> None:
@@ -68,13 +71,13 @@ async def _revoke_responses(requests: list[SubrequestData]):
     return await check_import_responses_state(ack_guid)
 
 
-async def _send_debt_responses(response_data: list[GISResponseDataFormat]):
+async def _send_debt_responses(responses_data: list[GISResponseDataFormat]):
     """
     Отправка положительных ответов на портал
-    :param response_data: длина списка не должна превышать 100, согласно ограничениям ГИС ЖКХ
+    :param responses_data: длина списка не должна превышать 100, согласно ограничениям ГИС ЖКХ
     :return:
     """
-    debt = SendImportDebtResponses(response_data)
+    debt = SendImportDebtResponses(responses_data)
     ack = await import_debt_responses(debt.get_xml())
     ack_guid = get_ack_message_guid(ack)
     await asyncio.sleep(10)

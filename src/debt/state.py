@@ -12,10 +12,10 @@ async def check_import_responses_state(message_guid: str) -> int:
     state_imp.set_message_guid(message_guid)
     attempt_count = 0
     while True:
-        ack = await state_request(state_imp.get_xml())
-        state = get_ack_import_responses_state(ack)
+        sent_ack = await state_request(state_imp.get_xml())
+        state = get_ack_import_responses_state(sent_ack)
         if state == '3':
-            logger.info('Успешный импорт ответов на запрос')
+            logger.info('Успешная операция импорта')
             return 1
         elif state in ('1', '2'):
             await asyncio.sleep(get_delay_time(attempt_count))

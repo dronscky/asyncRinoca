@@ -214,7 +214,7 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                         resp_data.append(data)
     # На портале не продуман момент, когда на одном адресе несколько лс, при том эти лс имеют задолженность.
     # Решением пока вижу возвращать срез, где данные первого лс
-    return resp_data[:1] if resp_data else []
+    return resp_data[-1:] if resp_data else []
 
 
 async def main():

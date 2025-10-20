@@ -5,6 +5,7 @@ from typing import Optional
 import aiohttp
 
 from src.config import project_config
+from src.api.gis.custom_exceptions import UploadFileError
 from src.api.gis.utils import calc_hash_by_md5, calc_hash_by_gost, generate_string, get_file_extension
 from src.log.log import logger
 
@@ -84,10 +85,7 @@ async def _single_mode_upload(url: str, file_: File) -> Optional[str]:
     if upload_id := response.get('X-Upload-UploadID'):
         return upload_id
     else:
-        logger.error(f'Ошибка отправки файла {file_.filename}')
-        logger.error("Ответ сервера:")
-        logger.error(response)
-        raise
+        raise UploadFileError(file_.filename, response)
 
 
 async def _multi_mode_upload(url: str, file_: File) -> Optional[str]:
@@ -132,7 +130,7 @@ async def _multi_mode_upload(url: str, file_: File) -> Optional[str]:
                 return upload_id
 
     logger.error(f'Ошибка отправки файла {file_.filename}')
-    raise
+    raise UploadFileError(file_.filename, result)
 
 
 async def _upload_file(url: str, file_: File) -> str:
