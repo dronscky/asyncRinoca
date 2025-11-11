@@ -127,9 +127,20 @@ class SendImportDebtResponses(ImportDebtResponses):
                         resp_data_node = clone.find('drs:responseData', namespaces=ns)
                         # клонируем узел debtInfo для каждого должника
                         debt_info_clone = copy.deepcopy(self.debt_info)
-                        debt_info_clone.find('drs:person/drs:firstName', namespaces=ns).text = name.firstName
-                        debt_info_clone.find('drs:person/drs:lastName', namespaces=ns).text = name.lastName
-                        debt_info_clone.find('drs:person/drs:middleName', namespaces=ns).text = name.middleName
+
+                        first_name_elem = debt_info_clone.find('drs:person/drs:firstName', namespaces=ns)
+                        first_name_elem.text = name.firstName
+
+                        last_name_elem = debt_info_clone.find('drs:person/drs:lastName', namespaces=ns)
+                        last_name_elem.text = name.lastName
+
+                        middle_name_elem = debt_info_clone.find('drs:person/drs:middleName', namespaces=ns)
+
+                        if name.middleName != '':
+                            middle_name_elem.text = name.middleName
+                        else:
+                            middle_name_elem_parent = middle_name_elem.getparent()
+                            middle_name_elem_parent.remove(middle_name_elem)
 
                         if files := debtors.files:
                             for file in files:
@@ -147,6 +158,7 @@ class SendImportDebtResponses(ImportDebtResponses):
 
                         # вставляем
                         resp_data_node.append(debt_info_clone)
+
             self.node.append(clone)
         SignedXML(self.tree, CERT, PRIVATE_KEY)
 

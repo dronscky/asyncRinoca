@@ -101,7 +101,7 @@ async def get_contracts_api_response_data(subrequestdata: SubrequestData) -> Opt
         return params
 
     api_response = await get_court_debt(_build_request_parameters(), getfile=True)
-        
+
     if api_response.get('ERROR'):
         logger.info(f'На запрос {subrequestdata} ответ Мобилл: {api_response}')
         return
@@ -112,7 +112,8 @@ async def formatting_to_gis_response_data(subrequestdata: SubrequestData) -> Opt
     if contracts_data := await get_contracts_api_response_data(subrequestdata):
         contract = contracts_data[0]
         upload_files_attrs = await upload_debt_files(contract.files)
-        return GISResponseDataFormat(subrequestGUID=subrequestdata.subrequestGUID, debtorsData=[GISDebtorsData(persons=contract.persons, files=upload_files_attrs)])        
+        return GISResponseDataFormat(subrequestGUID=subrequestdata.subrequestGUID, debtorsData=[GISDebtorsData(persons=contract.persons, files=upload_files_attrs)])
+    # await delete_sent_subrequest(subrequestdata.subrequestGUID)
     return
 
 
@@ -124,6 +125,7 @@ async def resend_subrequest_response(subrequestdata: SubrequestData) -> None:
                 if await handler.send_response(response_data) == 1:
                     await delete_sent_subrequest(subrequestdata.subrequestGUID)
                     await _db_insert_subrequest(subrequestdata.subrequestGUID, subrequestdata.sentDate, 'Имеется')
+
 
 
 async def worker():
@@ -142,7 +144,7 @@ async def worker():
                 continue
             counter.increment_debtor_subrequest()
 
-    send_email_to_admins('Отправлено положительных ответов', f'{counter.get_debtor_subrequests()}')
+        send_email_to_admins('Отправлено положительных ответов', f'{counter.get_debtor_subrequests()}')
 
 
 if __name__ == "__main__":

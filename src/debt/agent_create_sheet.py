@@ -45,9 +45,6 @@ async def its_holiday() -> bool:
 async def _create_spreadsheet(data: list[SubrequestCheckDetails]) -> None:
     title = f'Отчет на проверку {datetime.now().strftime('%y-%m-%d')}'
     try:
-        if await its_holiday():
-            return None
-
         await create_spreadsheet(title, data)
         m = f'Отчет "{title}" сформирован {datetime.now()}'
         logger.info(m)
@@ -58,6 +55,9 @@ async def _create_spreadsheet(data: list[SubrequestCheckDetails]) -> None:
 
 
 async def handler():
+    if await its_holiday():
+        return None
+
     if rows := await _get_check_subrequests():
         await _create_spreadsheet(rows)
         await _update_subrequests_status([(row.subrequestguid,) for row in rows])

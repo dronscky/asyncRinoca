@@ -164,6 +164,7 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
         # Перебираем все лс найденные по адресу на наличие неоплаченных ЗСП ПИР и если на одном лс их несколько,
         # то выбираем самое позднее ЗСП, данные которого будут отправлены в ГИС ЖКХ
         addresses = {account.get('Address') for account in accounts}
+
         if len(addresses) == 1:
             for account in accounts:
 
@@ -175,7 +176,9 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                     continue
 
                 court_debt = account.get('CourtDebt', {})
-                if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
+
+                # if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
+                if court_debt and (documents := court_debt.get('Documents')):
                     last_document = None
 
                     for document in documents:
