@@ -104,7 +104,7 @@ async def get_contracts_api_response_data(subrequestdata: SubrequestData) -> Opt
 
     if api_response.get('ERROR'):
         logger.info(f'На запрос {subrequestdata} ответ Мобилл: {api_response}')
-        return
+        return None
     return _process_mob_json_response(api_response)
     
 
@@ -113,8 +113,7 @@ async def formatting_to_gis_response_data(subrequestdata: SubrequestData) -> Opt
         contract = contracts_data[0]
         upload_files_attrs = await upload_debt_files(contract.files)
         return GISResponseDataFormat(subrequestGUID=subrequestdata.subrequestGUID, debtorsData=[GISDebtorsData(persons=contract.persons, files=upload_files_attrs)])
-    # await delete_sent_subrequest(subrequestdata.subrequestGUID)
-    return
+    return None
 
 
 async def resend_subrequest_response(subrequestdata: SubrequestData) -> None:
@@ -125,7 +124,9 @@ async def resend_subrequest_response(subrequestdata: SubrequestData) -> None:
                 if await handler.send_response(response_data) == 1:
                     await delete_sent_subrequest(subrequestdata.subrequestGUID)
                     await _db_insert_subrequest(subrequestdata.subrequestGUID, subrequestdata.sentDate, 'Имеется')
-
+                    counter.increment_debtor_subrequest()
+        else:
+            await delete_sent_subrequest(subrequestdata.subrequestGUID)
 
 
 async def worker():
@@ -142,7 +143,6 @@ async def worker():
             if isinstance(res, Exception):
                 logger.error(f"Ошибка отправки положительного ответа: {res}")
                 continue
-            counter.increment_debtor_subrequest()
 
         send_email_to_admins('Отправлено положительных ответов', f'{counter.get_debtor_subrequests()}')
 
