@@ -47,7 +47,7 @@ async def delete_report(report_id: str) -> None:
 
 async def write_check_history(subrequest_details: SubrequestCheckDetails) -> None:
     sql = f"""
-        insert into check_history (sent_date, subrequestguid, persons, case_number, buh)
+        insert into check_history (sent_date, requestguid, debtors, sp_no, buh)
         values ('{subrequest_details.sent_date}', '{subrequest_details.subrequestguid}', '{subrequest_details.persons}', '{subrequest_details.case_number}', '{subrequest_details.buh}') 
     """
     await execute_command(sql)
