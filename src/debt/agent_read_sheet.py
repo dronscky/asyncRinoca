@@ -45,7 +45,17 @@ async def delete_report(report_id: str) -> None:
     await execute_command(sql, report_id)
 
 
+async def write_check_history(subrequest_details: SubrequestCheckDetails) -> None:
+    sql = f"""
+        insert into check_history (sent_date, subrequestguid, persons, case_number, buh)
+        values ('{subrequest_details.sent_date}', '{subrequest_details.subrequestguid}', '{subrequest_details.persons}', '{subrequest_details.case_number}', '{subrequest_details.buh}') 
+    """
+    await execute_command(sql)
+
+
 async def process_report_row(subrequest_details: SubrequestCheckDetails) -> Optional[SubrequestCheckDetails]:
+            await write_check_history(subrequest_details)
+
             match subrequest_details.buh:
                 case 'Имеется':
                     await update_subrequest_status(subrequest_details.subrequestguid)

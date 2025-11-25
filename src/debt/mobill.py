@@ -177,8 +177,7 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
 
                 court_debt = account.get('CourtDebt', {})
 
-                # if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
-                if court_debt and (documents := court_debt.get('Documents')):
+                if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
                     last_document = None
 
                     for document in documents:
