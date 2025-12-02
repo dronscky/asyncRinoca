@@ -6,7 +6,16 @@ from src.debt.schema import SubrequestCheckDetails
 from src.log.log import logger
 
 
-async def update_zsp_status(sd: SubrequestCheckDetails) -> None:
+async def update_zsp_status(sd: SubrequestCheckDetails, status_name) -> None:
+
+    match status_name:
+        case 'Погашена':
+            status = 271
+        case 'Отмена СП':
+            status = 312
+        case _:
+            raise ValueError(f'Неверный статус: {status_name}')
+
     data = {
         'identifier': sd.account,
         'exsys': 'OLDBILLING',
@@ -14,7 +23,7 @@ async def update_zsp_status(sd: SubrequestCheckDetails) -> None:
         'number': sd.doc_arm_number,
         'datedoc': sd.doc_date,
         'datestart': sd.doc_date,
-        'status': 271,
+        'status': status,
         'statusdatetime': datetime.now(),
         'documentidentifier': f'zsp-{sd.doc_arm_number}'
     }
