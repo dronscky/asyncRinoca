@@ -59,7 +59,7 @@ async def process_report_row(subrequest_details: SubrequestCheckDetails) -> Opti
             match subrequest_details.buh:
                 case 'Имеется':
                     await update_subrequest_status(subrequest_details.subrequestguid)
-                case 'Погашена':
+                case 'Погашена' | 'Отмена СП':
                     await update_zsp_status(subrequest_details)
                     await delete_subrequest(subrequest_details.subrequestguid)
                 case _:

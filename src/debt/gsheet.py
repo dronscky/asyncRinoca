@@ -75,7 +75,7 @@ async def form_worksheet(ws: AsyncioGspreadWorksheet, rows: list[SubrequestCheck
     # фиксируем 2 первые строки
     set_frozen(ws.ws, wh.COUNT_HEADER_ROWS)
     # устанавливаем ячейки с валидацией
-    await _set_validation('Бухгалтерия', ['Имеется', 'Погашена'])
+    await _set_validation('Бухгалтерия', ['Имеется', 'Погашена', 'Отмена СП'])
     # фиксируем ширину столбцов из COLS_WIDTH
     set_column_widths(ws.ws, [(wh.get_col_letter_by_title(k), v) for k, v in COLS_WIDTH.items()])
     # скрываем колонки с технической информацией
