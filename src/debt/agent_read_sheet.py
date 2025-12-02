@@ -54,17 +54,17 @@ async def write_check_history(subrequest_details: SubrequestCheckDetails) -> Non
 
 
 async def process_report_row(subrequest_details: SubrequestCheckDetails) -> Optional[SubrequestCheckDetails]:
-            await write_check_history(subrequest_details)
+    await write_check_history(subrequest_details)
 
-            match subrequest_details.buh:
-                case 'Имеется':
-                    await update_subrequest_status(subrequest_details.subrequestguid)
-                case 'Погашена' | 'Отмена СП':
-                    await update_zsp_status(subrequest_details, subrequest_details.buh)
-                    await delete_subrequest(subrequest_details.subrequestguid)
-                case _:
-                    return subrequest_details
-            return None
+    match subrequest_details.buh:
+        case 'Имеется':
+            await update_subrequest_status(subrequest_details.subrequestguid)
+        case 'Погашена' | 'Отмена СП':
+            await update_zsp_status(subrequest_details, subrequest_details.buh)
+            await delete_subrequest(subrequest_details.subrequestguid)
+        case _:
+            return subrequest_details
+    return None
 
 
 async def handler():
