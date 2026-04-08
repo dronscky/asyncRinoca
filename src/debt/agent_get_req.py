@@ -28,42 +28,55 @@ async def worker():
             logger.error('Ошибка отправки запроса о наличии задолженности')
             raise
         # 2. Формируем и отправляем XML на получение ответа на ранее отправленный запрос на шаге 1
+
         state_exp = GetStateXML()
         state_exp.set_message_guid(get_ack_message_guid(st1_ack))
-        try:
-            st2_ack = await state_request(state_exp.get_xml())
-            del state_exp
-        except Exception:
-            logger.error('Ошибка отправки запроса на получение ответа на запрос о наличии задолженности')
-            raise
-        data = get_exportDSRsData(st2_ack)
+
+        while True:
+            try:
+                st2_ack = await state_request(state_exp.get_xml())
+                #
+            except Exception:
+                logger.error('Ошибка отправки запроса на получение ответа на запрос о наличии задолженности')
+                raise
+            if data := get_exportDSRsData(st2_ack):
+                if data == 'wait':
+                    await asyncio.sleep(get_delay_time(srv_request_count))
+                    srv_request_count += 1
+                else:
+                    srv_request_count = 0
+                    break
+            else:
+                break
+        del state_exp
 
         #  Обрабатываем ответ на запрос о наличии задолженности
+        # if data:
+        #     if data == 'wait':
+        #         await asyncio.sleep(get_delay_time(srv_request_count))
+        #         srv_request_count += 1
+        #     else:
+        #         srv_request_count = 0
         if data:
-            if data == 'wait':
-                await asyncio.sleep(get_delay_time(srv_request_count))
-                srv_request_count += 1
+            if data.next == 'last':
+                is_over = True
             else:
-                srv_request_count = 0
-                if data.next == 'last':
-                    is_over = True
-                else:
-                    sub = data.next
+                sub = data.next
 
-                #  В случае, когда не требуется выгрузка для проверки бухгалтерами, то сразу getfile=True,
-                # иначе False
-                #  1.
-                response_data = await get_responses_data(data.subrequests, getfile=False)
-                 #  2. Отправка ответов
-                import_responses = SendImportDebtResponses(response_data)
-                try:
-                    st3_ack = await import_debt_responses(import_responses.get_xml())
-                    # Проверка на состояние отправки занимает время. Данный процесс лучше в отдельный поток
-                    # или запускать отдельно
-                    # await check_import_responses_state(get_ack_message_guid(st3_ack))
-                except Exception:
-                    logger.error('Ошибка отправки ответа на запрос о наличии задолженности')
-                    raise
+            #  В случае, когда не требуется выгрузка для проверки бухгалтерами, то сразу getfile=True,
+            # иначе False
+            #  1.
+            response_data = await get_responses_data(data.subrequests, getfile=False)
+             #  2. Отправка ответов
+            import_responses = SendImportDebtResponses(response_data)
+            try:
+                st3_ack = await import_debt_responses(import_responses.get_xml())
+                # Проверка на состояние отправки занимает время. Данный процесс лучше в отдельный поток
+                # или запускать отдельно
+                # await check_import_responses_state(get_ack_message_guid(st3_ack))
+            except Exception:
+                logger.error('Ошибка отправки ответа на запрос о наличии задолженности')
+                raise
         else:
             #  Отсутствуют запросы о наличии задолженности
             is_over = True

@@ -46,6 +46,7 @@ class SubrequestData:
     fiasHouseGUID: str
     address: str
     apartment: str
+    resp_status: int | None = None
 
 
 @dataclass(frozen=True)

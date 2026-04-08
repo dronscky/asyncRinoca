@@ -109,7 +109,6 @@ class SendImportDebtResponses(ImportDebtResponses):
         data - словарь с ключом subrequestGUID
         """
         ns = self.get_namespaces()
-
         for item in self.data:
             clone = copy.deepcopy(self.action)
             clone.find('base:TransportGUID', namespaces=ns).text = gen_guid()

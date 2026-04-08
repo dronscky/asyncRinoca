@@ -40,7 +40,7 @@ class DebtApiResponseData:
 def split_debtors_names(persons: list[str] | str) -> set[PersonName]:
     if isinstance(persons, str):
         return {PersonName(*persons.split(maxsplit=2))}
-    return {PersonName(*person.split(maxsplit=2)) for person in persons}
+    return {PersonName(*person.split(maxsplit=2)) for person in persons if person != ''}
 
 
 def find_sp_filename(filename: str) -> str:
@@ -177,7 +177,9 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
 
                 court_debt = account.get('CourtDebt', {})
 
-                if court_debt and court_debt['SumDebt'] > 0 and (documents := court_debt.get('Documents')):
+                if (court_debt
+                        and (court_debt['SumDebt'] > 0 or court_debt['SumDebtPenalty'] > 0 or court_debt['SumDebtDuty'] > 0)
+                        and (documents := court_debt.get('Documents'))):
                     last_document = None
 
                     for document in documents:
@@ -208,8 +210,12 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                                     )
                                     files.append(f)
 
+                        debtors = last_document['DocumentEntry'].get('ContractorAdditionalOwner')
+                        if not debtors or debtors == '':
+                            debtors = account['Name']
+
                         data = DebtApiResponseData(
-                            persons=split_debtors_names(last_document['DocumentEntry']['ContractorAdditionalOwner']),
+                            persons=split_debtors_names(debtors),
                             files=files,
                             ext_params=ext_params
                         )
