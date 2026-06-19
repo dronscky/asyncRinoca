@@ -50,3 +50,17 @@ async def set_court_status(session: aiohttp.ClientSession, data: dict[str, Any] 
 
     url = f'http://mobill-tko/csp/eco/api.csp?type=document&action=set&key={KEY}' + params
     return await _request(session, url, data)
+
+
+# async def main():
+#     params = {
+#         'houseguid': 'c19eef3e-9f7f-4268-8605-8a7d92dab9c1',
+#         'apartment': ''
+#     }
+#     print(await get_court_debt(params))
+#
+#
+#
+# if __name__ == '__main__':
+#     import asyncio
+#     asyncio.run(main())

@@ -3,7 +3,6 @@ import asyncio
 from src.api.db.db import execute_command, select_command
 from src.debt.state import check_import_responses_state
 from src.emails.emails import send_email_to_admins
-from src.utils import counter
 
 
 async def get_response_requests():

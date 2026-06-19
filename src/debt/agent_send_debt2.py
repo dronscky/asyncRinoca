@@ -101,6 +101,7 @@ async def get_contracts_api_response_data(subrequestdata: SubrequestData) -> Opt
         return params
 
     api_response = await get_court_debt(_build_request_parameters(), getfile=True)
+
     if api_response.get('ERROR'):
         logger.info(f'На запрос {subrequestdata} ответ Мобилл: {api_response}')
         return None
@@ -118,6 +119,7 @@ async def formatting_to_gis_response_data(subrequestdata: SubrequestData) -> Opt
 async def resend_subrequest_response(subrequestdata: SubrequestData) -> None:
     async with semaphore:
         if subrequestdata.resp_status is None:
+            print(await formatting_to_gis_response_data(subrequestdata))
             if response_data := await formatting_to_gis_response_data(subrequestdata):
                 handler = GISResponseHandler()
                 ack_revoke_guid = await handler.revoke_response(subrequestdata.subrequestGUID)
@@ -148,7 +150,6 @@ async def worker():
     """
     Точка входа в модуль отправки проверенных запросов на наличие задолженности
     """
-
     if debt_subrequests := await get_debt_requests():
         tasks = [resend_subrequest_response(debt_subrequest) for debt_subrequest in debt_subrequests]
         results = await asyncio.gather(*tasks, return_exceptions=True)

@@ -3,6 +3,7 @@ import asyncio
 from abc import ABC, abstractmethod
 
 import src.debt.agent_create_sheet
+import src.debt.agent_control
 import src.debt.agent_get_req
 import src.debt.agent_send_debt2
 import src.debt.agent_read_sheet
@@ -107,6 +108,7 @@ if __name__ == '__main__':
     subparser.add_parser('create')
     subparser.add_parser('read')
     subparser.add_parser('mng')
+    subparser.add_parser('ctrl')
 
     args = parser.parse_args()
 
@@ -121,5 +123,7 @@ if __name__ == '__main__':
             asyncio.run(start_agent(ReadSpreadsheetAgent()))
         case 'mng':
             asyncio.run(start_agent(CreateMngReportAgent()))
+        case 'ctrl':
+            asyncio.run(src.debt.agent_control.worker())
         case _:
             parser.print_help()

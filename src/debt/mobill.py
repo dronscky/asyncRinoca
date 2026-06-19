@@ -55,13 +55,18 @@ def find_sp_filename(filename: str) -> str:
 
 async def get_responses_data(subrequests_data: list[SubrequestData], getfile: bool = False) -> list[GISResponseDataFormat]:
     tasks = [_get_response_format_data(subrequest_data, getfile) for subrequest_data in subrequests_data]
-    try:
-        result = await asyncio.gather(*tasks, return_exceptions=True)
-        # print(result)
-        return [*result]
-    except Exception as e:
-        logger.error(e)
-        raise
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    success_responses = []
+    for result in results:
+        if isinstance(result, Exception):
+            logger.error(f'Ошибка обработки запроса: {result}')
+            raise
+        else:
+            success_responses.append(result)
+    # print(result)
+    return success_responses
 
 
 async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bool) -> GISResponseDataFormat:
@@ -210,8 +215,9 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                                     )
                                     files.append(f)
 
-                        debtors = last_document['DocumentEntry'].get('ContractorAdditionalOwner')
-                        if not debtors or debtors == '':
+                        debtors = [debt for debt in last_document['DocumentEntry'].get('ContractorAdditionalOwner') if debt != '']
+
+                        if not debtors:
                             debtors = account['Name']
 
                         data = DebtApiResponseData(

@@ -16,6 +16,8 @@ def connect_db(func):
             "Database=Rinoca2;"
             f"UID={os.getenv("gis_uid")};"
             f"PWD={os.getenv("gis_pwd")};"
+            "MAX_ALLOWED_PACKET=1073741824;"  # 1GB (по умолчанию 16MB)
+            "NET_BUFFER_LENGTH=1048576;" 
             "TrustServerCertificate=no;"
         )
         async with aioodbc.connect(dsn=dsn) as conn:
@@ -27,9 +29,10 @@ def connect_db(func):
                 except Exception as e:
                     if 'duplicate' not in str(e).lower():
                         logger.error(f"Error executing {func.__name__}: {e}")
-                        raise
-                finally:
                     await conn.rollback()
+                    raise Exception(f"Error executing {func.__name__}: {e}")
+                # finally:
+                #     await conn.close()
     return wrapper
 
 

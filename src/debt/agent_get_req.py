@@ -1,6 +1,7 @@
 import asyncio
 
 from src.base.delay import get_delay_time
+from src.debt.state import check_import_responses_state
 from src.emails.emails import send_email_to_admins
 from src.base.state import GetStateXML
 from src.base.reader import get_ack_message_guid
@@ -8,7 +9,6 @@ from src.debt.debt_xml import ExportDebtSubrequests, SendImportDebtResponses
 from src.debt.mobill import get_responses_data
 from src.debt.reader import get_exportDSRsData
 from src.debt.service import export_debt_subrequests, import_debt_responses, state_request
-from src.debt.state import check_import_responses_state
 from src.log.log import logger
 from src.utils import counter
 
@@ -39,6 +39,7 @@ async def worker():
             except Exception:
                 logger.error('Ошибка отправки запроса на получение ответа на запрос о наличии задолженности')
                 raise
+
             if data := get_exportDSRsData(st2_ack):
                 if data == 'wait':
                     await asyncio.sleep(get_delay_time(srv_request_count))
@@ -65,18 +66,21 @@ async def worker():
 
             #  В случае, когда не требуется выгрузка для проверки бухгалтерами, то сразу getfile=True,
             # иначе False
-            #  1.
-            response_data = await get_responses_data(data.subrequests, getfile=False)
-             #  2. Отправка ответов
-            import_responses = SendImportDebtResponses(response_data)
-            try:
-                st3_ack = await import_debt_responses(import_responses.get_xml())
-                # Проверка на состояние отправки занимает время. Данный процесс лучше в отдельный поток
-                # или запускать отдельно
-                # await check_import_responses_state(get_ack_message_guid(st3_ack))
-            except Exception:
-                logger.error('Ошибка отправки ответа на запрос о наличии задолженности')
-                raise
+            #   1.
+            for i in range(0, len(data.subrequests), 100):
+                response_data = await get_responses_data(data.subrequests[i:i+100], getfile=False)
+                #  2. Отправка ответов
+
+            # for i in range(0, len(response_data), 100):
+                import_responses = SendImportDebtResponses(response_data)
+                try:
+                    st3_ack = await import_debt_responses(import_responses.get_xml())
+                    # Проверка на состояние отправки занимает время. Данный процесс лучше в отдельный поток
+                    # или запускать отдельно
+                    # res = await check_import_responses_state(get_ack_message_guid(st3_ack))
+                except Exception:
+                    logger.error('Ошибка отправки ответа на запрос о наличии задолженности')
+                    raise
         else:
             #  Отсутствуют запросы о наличии задолженности
             is_over = True
