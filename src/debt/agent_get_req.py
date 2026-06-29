@@ -69,6 +69,7 @@ async def worker():
             #   1.
             for i in range(0, len(data.subrequests), 100):
                 response_data = await get_responses_data(data.subrequests[i:i+100], getfile=False)
+
                 #  2. Отправка ответов
 
             # for i in range(0, len(response_data), 100):
