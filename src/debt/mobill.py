@@ -215,7 +215,11 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                                     )
                                     files.append(f)
 
-                        debtors = [debt for debt in last_document['DocumentEntry'].get('ContractorAdditionalOwner') if debt != '']
+                        contractor_additional_owner = last_document['DocumentEntry'].get('ContractorAdditionalOwner')
+                        if isinstance(contractor_additional_owner, str):
+                            contractor_additional_owner = [contractor_additional_owner,]
+
+                        debtors = [debt for debt in contractor_additional_owner if debt != '']
 
                         if not debtors:
                             debtors = account['Name']
