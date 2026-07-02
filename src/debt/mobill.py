@@ -4,7 +4,7 @@ from dataclasses import dataclass, astuple
 from datetime import datetime
 import json
 import re
-from typing import Any, Optional
+from typing import Optional
 
 from src.api.db.db import execute_command
 from src.log.log import logger
@@ -95,6 +95,7 @@ async def _get_response_format_data(subrequest_data: SubrequestData, getfile: bo
         }
 
     api_response = await get_court_debt(params, getfile)
+
     if api_response.get('ERROR'):
         logger.info(f'На запрос {subrequest_data} ответ Мобилл {api_response}')
 
@@ -216,6 +217,10 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
                                     files.append(f)
 
                         contractor_additional_owner = last_document['DocumentEntry'].get('ContractorAdditionalOwner')
+
+                        if not contractor_additional_owner:
+                            continue
+
                         if isinstance(contractor_additional_owner, str):
                             contractor_additional_owner = [contractor_additional_owner,]
 
