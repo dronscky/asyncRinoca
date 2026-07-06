@@ -119,7 +119,6 @@ async def formatting_to_gis_response_data(subrequestdata: SubrequestData) -> Opt
 async def resend_subrequest_response(subrequestdata: SubrequestData) -> None:
     async with semaphore:
         if subrequestdata.resp_status is None:
-            print(await formatting_to_gis_response_data(subrequestdata))
             if response_data := await formatting_to_gis_response_data(subrequestdata):
                 handler = GISResponseHandler()
                 ack_revoke_guid = await handler.revoke_response(subrequestdata.subrequestGUID)

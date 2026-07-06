@@ -217,16 +217,19 @@ def _process_mob_json_response(mobill_json_response: json) -> Optional[list[Debt
 
                         contractor_additional_owner = last_document['DocumentEntry'].get('ContractorAdditionalOwner')
 
-                        if not contractor_additional_owner:
-                            continue
+                        if contractor_additional_owner:
+                            if isinstance(contractor_additional_owner, str):
+                                contractor_additional_owner = [contractor_additional_owner,]
 
-                        if isinstance(contractor_additional_owner, str):
-                            contractor_additional_owner = [contractor_additional_owner,]
+                            addit_debtors = [debt for debt in contractor_additional_owner if debt != '']
+                        else:
+                            addit_debtors = []
 
-                        debtors = [debt for debt in contractor_additional_owner if debt != '']
 
-                        if not debtors:
-                            debtors = account['Name']
+                        debtors = [account['Name'],]
+
+                        if addit_debtors:
+                            debtors.extend(addit_debtors)
 
                         data = DebtApiResponseData(
                             persons=split_debtors_names(debtors),
