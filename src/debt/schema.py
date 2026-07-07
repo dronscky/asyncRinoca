@@ -57,7 +57,7 @@ class PersonName:
                           middleName = Отчество
     """
     lastName: str
-    firstName: str
+    firstName: str = ''
     middleName: str = ''
 
     def __repr__(self):
